@@ -1,0 +1,141 @@
+{
+  "safety_notices": [
+    "Offline MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance"
+  ],
+  "verification_method": "Installed package in fresh virtual environments and an isolated source copy; no Git commands.",
+  "primary_python": "Python 3.13.5",
+  "unit_tests": {
+    "exit_code": 0,
+    "elapsed_seconds": 10.55212,
+    "tests_run": 97,
+    "runner_elapsed_seconds": 10.39,
+    "passed": true
+  },
+  "corpus_command": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.098785
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.44169
+  },
+  "clean_copy_source_files": 26,
+  "clean_copy_venv": {
+    "exit_code": 0,
+    "elapsed_seconds": 3.703142
+  },
+  "clean_copy_python": "Python 3.11.9",
+  "clean_copy_install": {
+    "exit_code": 0,
+    "elapsed_seconds": 6.843702
+  },
+  "clean_copy_tests": {
+    "exit_code": 0,
+    "elapsed_seconds": 10.653754,
+    "tests_run": 97,
+    "runner_elapsed_seconds": 10.47,
+    "passed": true
+  },
+  "clean_copy_evaluation": {
+    "exit_code": 0,
+    "elapsed_seconds": 1.401965,
+    "total": 31,
+    "passed": 31,
+    "failed": 0
+  },
+  "clean_copy_example": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.2892
+  },
+  "clean_copy_corpus": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.100231
+  },
+  "clean_copy_imports_installed_package": true,
+  "cross_version_research_match": false,
+  "documented_artifacts_created": true,
+  "evaluation": {
+    "total": 31,
+    "passed": 31,
+    "failed": 0,
+    "elapsed_seconds": 1.407603
+  },
+  "sample_synthetic_metrics": {
+    "strategy": {
+      "cumulative_return": 0.5246570811437103,
+      "annualized_return": 0.04797871962820621,
+      "annualized_volatility": 0.04881393292788858,
+      "sharpe_ratio": 0.9860084276803671,
+      "maximum_drawdown": -0.08293595011826405,
+      "average_monthly_turnover": 0.1302120050036301,
+      "total_turnover": 14.06289654039205,
+      "total_cost_fraction": 0.014062896540392049,
+      "observation_count": 108
+    },
+    "benchmark": {
+      "cumulative_return": 0.6719800344380653,
+      "annualized_return": 0.05877445394982006,
+      "annualized_volatility": 0.06956174526728,
+      "sharpe_ratio": 0.8572690962439602,
+      "maximum_drawdown": -0.09427481794521064,
+      "average_monthly_turnover": 0.033160883262065996,
+      "total_turnover": 3.5813753923031273,
+      "total_cost_fraction": 0.0035813753923031274,
+      "observation_count": 108
+    },
+    "sharpe_difference": 0.12873933143640692,
+    "observation_count": 108
+  },
+  "sample_verdict": "supported_in_synthetic_fixture_only",
+  "publication_scan": {
+    "utf8_files_read": 34,
+    "python_310_syntax_files": 19,
+    "trailing_whitespace_files": [],
+    "unfinished_or_conflict_marker_files": [],
+    "credential_pattern_files": [],
+    "largest_file_bytes": 319648,
+    "scope": "Source, tests, docs, configuration, and intended evaluation artifacts; synthetic refusal examples are test data.",
+    "git_diff_check": "Not run: user reserved all further Git commands. Full-file whitespace and conflict-marker checks passed.",
+    "local_markdown_links_valid": true,
+    "source_hashes_match_verified_install": true,
+    "sample_and_example_journal_and_result_integrity": true
+  },
+  "source_code_sha256": {
+    "pyproject.toml": "96644835ab64fdc393187efaf2970fd26fe58ae6c97d189b94a5726142b27221",
+    "scripts/run_evaluation.py": "c6f4f18fa25b65095b414f468e34b2bda90062fb52a53ba7e3d5e7dd771d8bef",
+    "src/signal_research_agent/__init__.py": "0274d977708ceb96d87fe9cbd6b8b4325ef0ac9daec7a6c2cc2678996eca6eb3",
+    "src/signal_research_agent/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "src/signal_research_agent/backtester.py": "14ff16ddf9e14849ec24c2c86291f8e60f76dba63466fda8d04af243d9cc1e95",
+    "src/signal_research_agent/cli.py": "111f82c964f8a6819f9c72849c2115f6c9f1c6c704c7cf1fd4a74c5f60262d94",
+    "src/signal_research_agent/coordinator.py": "67d015f6898e8af6f5c3648c855936ea99daa1ea16bbc41529802ba4fb792b91",
+    "src/signal_research_agent/data/literature.json": "762e15df023a4ee30803ae5d04afee08823326fa09769001e442ec85c11fe8bf",
+    "src/signal_research_agent/data_engineer.py": "c226eb9a9059779d2e0171a3eb89970d7cb8d948a4347c9078892c78e7f1d3a3",
+    "src/signal_research_agent/evaluation.py": "7e512276eca443abf068965bc55016c659b4a10ab56a13b179fbb7a9b0db8e6f",
+    "src/signal_research_agent/hypothesis.py": "9e7db0a1f2dc1a8e0fc9468ba04459f16737e50dde35164d1b8d61acb2ef7993",
+    "src/signal_research_agent/journal.py": "84ff7a5d75838710e23c513b587beddc688910b1063b29cd028734ef4f39f24c",
+    "src/signal_research_agent/models.py": "52803294304e59cdf1adad6c01685796b95e30b0356bfb19499348edd161279f",
+    "src/signal_research_agent/retrieval.py": "8a040a501429293048ad59e9d3046135fe6f7fd5b09b6dd6e007bfe868f1aff1",
+    "src/signal_research_agent/safety.py": "1ac1930dfdcf4a70aa8ee78796d4979e664705e85a4eec9d13f818318b2f6d09",
+    "src/signal_research_agent/skeptic.py": "0ce0aba324eb0f1edce839dd6ee95a98153d195bb3fdbb7214a4c38b245d2c11",
+    "tests/test_coordinator.py": "4df2deae01af4804d3960c3d027b111806cb4dcec6c3817bef01a3cadd5dd88b",
+    "tests/test_data_backtester.py": "3d0f490934f6d131ef06154144d04024e9562f1db01f836aeaa483c7cee62eee",
+    "tests/test_evaluation_cli.py": "440e2c6520b9327a54707e8979dbc7e1e464364e21ceeb655a34d1d29c4203d6",
+    "tests/test_retrieval_hypothesis.py": "d6ce338e350e6de6cfea22a27f72cbbd1c9afb1f78d0c1a1620250a5eef43ed5",
+    "tests/test_safety_skeptic_journal.py": "5e54b8d8fc986d64beb9ac9f4c72eb1ab8165006b91cf34dd5306b719f93e9cd"
+  },
+  "cross_version_comparison": {
+    "same_hypothesis": true,
+    "same_data_hash": true,
+    "same_verdict": true,
+    "numeric_fields_differing": 71,
+    "max_absolute_numeric_difference": 3.552713678800501e-15,
+    "within_1e_12": true,
+    "byte_identical": false,
+    "explanation": "Floating-point differences alter backtest values and downstream journal hashes; same-interpreter fresh-directory replay tests pass."
+  }
+}
