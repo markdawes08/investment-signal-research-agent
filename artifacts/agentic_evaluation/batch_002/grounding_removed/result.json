@@ -1,0 +1,60 @@
+{
+  "schema_version": "2.0",
+  "execution_mode": "llm",
+  "run_id": "run-efeb9edb87fdd011",
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "topic": "Explore whether lower-volatility stocks have better risk-adjusted returns",
+  "status": "grounding_failed",
+  "verdict": "rejected",
+  "requires_human_intervention": true,
+  "evidence": [],
+  "memory_context": [],
+  "hypothesis_search": null,
+  "hypothesis_lock": null,
+  "data_validation": null,
+  "backtest": null,
+  "duplicate_reference": null,
+  "replication_rationale": null,
+  "planning_contexts": [],
+  "provider_execution": {
+    "calls_attempted": 0,
+    "actual_provider_calls": 0,
+    "calls": [],
+    "token_usage": null,
+    "cost_usd": null,
+    "live_execution_verified": false
+  },
+  "input_guardrail": {
+    "allowed": true,
+    "code": "research_request_accepted",
+    "reason": "The request fits the fixed volatility-research workflow.",
+    "requires_human_intervention": false
+  },
+  "controlled_validation": null,
+  "review": {
+    "verdict": "rejected",
+    "requires_human_intervention": true,
+    "confidence": "none",
+    "checks": {
+      "workflow_gates": false
+    },
+    "objections": [
+      "Eligible public grounding is insufficient, altered, or contains instruction-like content."
+    ],
+    "limitations": [
+      "No new research conclusion is supported by this stopped run."
+    ]
+  },
+  "integrity": {
+    "audit_head": "2ae1651b26461a02a6de9249148f2719b33607af6d96b28fa82324527ac9d9f7",
+    "research_journal_head": "931bf8551f47b9b0928fc909674ecf2a28d7f55657b08f5e24102d51e4dc28be"
+  }
+}

@@ -17,6 +17,9 @@ htmlcov/
 *.tmp
 *.jsonl.lock
 .run.lock
+.research.lock
+artifacts/llm_run*/
+artifacts/shared_journal/
 .verification/
 artifacts/run*/
 .DS_Store

@@ -1,224 +1,182 @@
 # Investment Signal Research Agent
 
-**Deterministic synthetic data · Historical research only · Not investment advice · No trade execution · Not evidence of future performance**
+**Deterministic synthetic data · Historical research only · Not investment advice · No trade execution · Not evidence of future performance · Not evidence about real markets**
 
-An offline research assistant that turns a broad question about stock volatility into a locked, falsifiable hypothesis, runs one reproducible synthetic experiment, and records an independent critique with an audit trail. It is designed for students, technical reviewers, and research engineers who want to inspect how evidence, preregistration, data quality, and methodological review fit together.
+A capstone research assistant for students and research engineers who need to turn a broad investment-signal question into an inspectable, falsifiable experiment. Five separate roles retrieve literature, design and lock a hypothesis, validate synthetic data, run a point-in-time backtest, and independently critique the result.
 
-The capstone demonstrates research process discipline. Synthetic results describe a constructed software fixture and provide **no evidence about real markets**. The program has no trading, brokerage, account access, or personalized-advice functionality.
+| Execution path | Research design | Credentials/network |
+|---|---|---|
+| **Offline MVP** (default) | Preserved deterministic candidate tree; 12-month lookback, four selected assets | None; standard-library runtime and tests |
+| **LLM-assisted research MVP** | OpenAI-generated structured candidates, actual validation feedback, verified prior memory, supported design choices | Optional SDK and local `OPENAI_API_KEY`; explicitly selected |
+| **Saved-specification replay** | Verify an original completed run and execute its unchanged lock | None; zero provider calls |
 
-## What is implemented
+**Live verification remains incomplete.** This workspace has no configured `OPENAI_API_KEY`. Offline and mocked checks pass; the real-provider batch records zero actual provider calls. Mocked success is not a genuine LLM demonstration. See [the capstone handoff](docs/capstone_evidence.md) and [live status](artifacts/live_verification/live_verification_results.json).
 
-Five separate Python components work under a Coordinator. They are deterministic software roles, not five LLMs. The runtime and tests use the Python standard library, without API keys, network calls, proprietary datasets, paid services, or third-party runtime dependencies.
+## Architecture
 
 ```mermaid
 flowchart TD
-    Request[Research direction] --> Guard{Coordinator input gate}
-    Guard -->|refuse| Stop[Reject and request human intervention]
-    Guard -->|accept| Retrieve[Hypothesis Generator: local TF-IDF retrieval]
-    Corpus[Six curated public-source summaries] --> Retrieve
-    Retrieve --> Ground{Grounding gate}
-    Ground -->|fail| Stop
-    Ground -->|pass| Search[Compare total volatility, beta, residual volatility]
-    Search --> Revision[One bounded pre-lock specification revision]
-    Revision --> Feasible{Search budget and feasibility gate}
-    Feasible -->|fail| Stop
-    Feasible -->|pass| Lock[Hash and lock falsifiable hypothesis]
-    Lock --> Data[Data Engineer: synthetic monthly prices]
-    Data --> Validate{Fixed validation gate}
-    Validate -->|fail| Stop
-    Validate -->|pass| Test[Backtester: one fixed point-in-time test]
-    Test --> Review[Skeptic: independent checks and bounded verdict]
-    Review --> Output[JSON result and Markdown report]
-    Stop --> Output
-    Lock --> Memory[Append-only research journal]
-    Output --> Memory
-    Guard -. role events and gate decisions .-> Audit[Hash-chained audit journal]
-    Review -. review evidence .-> Audit
+    Input[Research direction and mode] --> Guard{Coordinator safety gate}
+    Guard -->|refuse| Stop[Explicit stop and human intervention]
+    Guard -->|accept| Retrieve[Local TF-IDF literature retrieval]
+    Retrieve --> Ground{Trusted and sufficient grounding?}
+    Ground -->|no| Stop
+    Ground -->|offline| Offline[Deterministic hypothesis tree]
+    Ground -->|LLM| Memory[Verify shared memory; exclude prior performance]
+    Memory --> Propose[LLM Hypothesis Generator proposes candidates]
+    Propose --> Assess[Coordinator validates, scores, checks duplicates]
+    Assess -->|actual objections, at most one round| Feedback[Concrete feedback and retained parents]
+    Feedback --> Propose
+    Assess -->|duplicate or no valid design| Stop
+    Assess -->|valid model-selected design| Lock[Hash and lock full specification]
+    Offline --> Lock
+    Saved[Saved result and journals] --> Replay[Verify replay provenance]
+    Replay --> Lock
+    Lock --> Data[Data Engineer: generate and validate synthetic data]
+    Data --> Gate{Data and lock pass?}
+    Gate -->|no| Stop
+    Gate -->|yes| Test[Backtester: fixed point-in-time harness]
+    Test --> Skeptic[Skeptic: independent provenance and numerical checks]
+    Skeptic --> Report[JSON, Markdown and chained journals]
+    Stop --> Report
+    Report -->|completed design, no performance| Memory
 ```
 
-| Role | Responsibility |
+| Role | Implemented responsibility |
 |---|---|
-| **Coordinator** | Routes the workflow, enforces gates and one pre-lock revision, stops on failure, and writes artifacts. |
-| **Hypothesis Generator** | Retrieves curated evidence; compares total volatility, beta, and idiosyncratic volatility using a bounded beam search; locks the feasible specification before data generation. |
-| **Data Engineer** | Generates a seeded, explicitly synthetic monthly-price panel and validates schema, prices, histories, dates, and availability. |
-| **Backtester** | Executes the unchanged hypothesis with lagged signals, drift-aware turnover, costs, and an equal-weight benchmark. |
-| **Skeptic** | Independently checks the lock, grounding, validation, chronology, observations, cost arithmetic, metrics, and permissible interpretation. |
+| Coordinator | Owns routing, actions, deterministic assessments, feedback, budgets, duplicate decisions, locking, gates, and artifacts. |
+| Hypothesis Generator | Offline: predefined bounded search. LLM: proposes claims, executable parameters, citations, assumptions, concise decisions, and optional revisions. |
+| Data Engineer | Generates deterministic synthetic monthly prices and checks schema, histories, prices, calendar, availability, universe, and leakage. |
+| Backtester | Executes accepted parameters unchanged with lagged signals, drift-aware turnover, costs, and equal-weight benchmark. |
+| Skeptic | Independently checks mode contracts, lock, evidence, audit chronology, search, signals, weights, costs, observations, statistics, and interpretation. |
 
-### Retrieval, reasoning, and memory
+Only the Hypothesis Generator uses an LLM. No CrewAI, LangGraph, MCP integration, vector database, learned embeddings, real-market data, brokerage connection, generated-code execution, or additional LLM agents are implemented. See [architecture.md](docs/architecture.md) for contracts and formulas.
 
-The six-source corpus contains original short summaries, stable IDs, authors, version metadata, URLs, topics, and interpretation cautions. Local cosine TF-IDF retrieval uses a small explicit synonym map. This is lightweight lexical retrieval with limited semantic normalization; it is not an embedding model or vector database. A fixed methodology query adds grounding about research protocol and overfitting. Numerical prices and returns remain structured data and are never indexed as prose.
+## Install and configure
 
-The Tree-of-Thought-style search is an inspectable candidate tree with **depth 2, beam width 2, at most 5 visited nodes, and one revision**. Scores use source-topic coverage and offline feasibility. Daily total-volatility research is adapted to the available monthly harness before locking. Beta and residual volatility require factor data and harnesses this MVP does not implement. Search therefore examines alternatives but is intentionally constrained to the one supported total-volatility test. No model generates hidden reasoning or tunes parameters against returns.
-
-The lock includes the signal, asset universe, lookback, holding period, selection rule, benchmark, costs, risk-free rate, success criterion, minimum observations, fixture seed/version/calendar, source IDs, and assumptions. Its canonical JSON produces a full SHA-256 digest and a versioned short ID. Backtesting cannot begin until the lock and data gate pass. There are no post-result revisions or automated parameter sweeps.
-
-`audit.jsonl` records role events and gate evidence. `research_journal.jsonl` retains hypothesis locks and conclusions. Existing valid journals are appended to when an output directory is reused; `result.json` and `research_report.md` then describe the latest run. Use a fresh directory for byte-identical replay. Memory is retained for inspection and is not fed back into hypothesis selection.
-
-## Install
-
-Python **3.10 or newer** is required. From a clone or local copy of this repository:
-
-```bash
-python -m venv .venv
-```
-
-Activate on macOS/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Activate in Windows PowerShell:
+Python 3.10 or newer is required. These are single-line PowerShell commands from the repository root:
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install .
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-If PowerShell activation is restricted, use `.\.venv\Scripts\python.exe` in place of `python` for each command below.
+The base package and tests have no third-party dependencies. Pip may download setuptools during installation; offline execution needs no network. In an activated environment use `python`; on macOS/Linux use `.venv/bin/python`. For source-only use, set `$env:PYTHONPATH = "src"`. `requirements.txt` describes the empty base runtime dependency set.
 
-```bash
-python -m pip install .
-python -m unittest discover -s tests -v
+For explicit LLM mode, install the optional SDK and enter the key locally with hidden input:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install ".[llm]"
+$env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new('', (Read-Host 'OpenAI API key' -AsSecureString)).Password
+$env:OPENAI_MODEL = 'gpt-4.1-mini-2025-04-14'
 ```
 
-`requirements.txt` documents the empty runtime dependency set. Packaging uses setuptools; pip may download build tooling during installation. After installation, all commands below run offline. A source-only alternative, requiring no package download, is to set `PYTHONPATH=src` before running the commands (`$env:PYTHONPATH = "src"` in PowerShell; `export PYTHONPATH=src` in a POSIX shell).
+Never put credentials in source, command arguments, prompts, journals, or chat. The key remains in the current PowerShell environment. The model setting is optional; the documented snapshot is the default, and `--model` can override it. Unsupported models fail explicitly. The optional SDK was installed and checked as version 2.54.0.
 
-## Run
+The adapter follows official [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs), [Python Responses](https://developers.openai.com/api/reference/python/resources/responses/methods/create), and [GPT-4.1 Mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini) documentation. It uses lazy SDK import, `responses.create`, strict `text.format`, `store=False`, the fixed OpenAI endpoint, no tools, SDK retries disabled, and a 30-second SDK HTTP timeout. Context is capped at 24,000 characters; output at 16,000 characters and a default 2,500 output tokens. Unknown token usage and cost remain `null`. The HTTP timeout is not an operating-system execution deadline.
 
-The single-line commands work in PowerShell and POSIX shells:
+## Exact commands
 
-```bash
-python -m signal_research_agent run --topic "Explore whether lower-volatility stocks have better risk-adjusted returns" --output-dir artifacts/run
-python -m signal_research_agent evaluate --output-dir artifacts/evaluation
-python -m signal_research_agent corpus
+Preserved offline behavior:
+
+```powershell
+.\.venv\Scripts\python.exe -m signal_research_agent run --topic "Explore whether lower-volatility stocks have better risk-adjusted returns" --output-dir artifacts/run
+.\.venv\Scripts\python.exe -m signal_research_agent evaluate --output-dir artifacts/offline_evaluation
+.\.venv\Scripts\python.exe -m signal_research_agent corpus
 ```
 
-The installed `signal-research-agent` command is equivalent to `python -m signal_research_agent`. An evaluation wrapper is also available:
+LLM design with persistent shared memory:
 
-```bash
-python scripts/run_evaluation.py --output-dir artifacts/evaluation
+```powershell
+.\.venv\Scripts\python.exe -m signal_research_agent run --mode llm --topic "Explore whether lower-volatility stocks have better risk-adjusted returns" --journal-dir artifacts/shared_journal --output-dir artifacts/llm_run
 ```
 
-Each completed or refused workflow creates the following files. Operational failures such as corrupt existing journals, stale writer locks, or insufficient filesystem permissions stop without replacing existing artifacts.
+Explicit supported constraints are validated against the actual model proposal:
 
-| File | Contents |
-|---|---|
-| `result.json` | Structured scope notices, hypothesis/search, evidence, validation, monthly attribution, metrics, skeptical verdict, and journal head hashes. |
-| `research_report.md` | Readable hypothesis, source links, synthetic metrics, objections, and limitations. |
-| `audit.jsonl` | Append-only ordered role events with hash-chain links. |
-| `research_journal.jsonl` | Append-only locks and final research conclusions. |
+```powershell
+.\.venv\Scripts\python.exe -m signal_research_agent run --mode llm --topic "Explore lower-volatility stocks with a six-month signal" --lookback-months 6 --selection-count 3 --journal-dir artifacts/shared_journal --output-dir artifacts/llm_run_constrained
+```
 
-The evaluation command creates `evaluation_results.json`, `sample_console_output.txt`, and all four files under `sample_run/`. Repeating it appends a new sample run to those journals and refreshes the derived evaluation summaries. Fresh temporary directories used by its replay checks are automatically removed.
+For an intentional replication, specify the earlier accepted parameters and a rationale. If that earlier experiment used six months and three assets:
 
-Exit codes: **0** for a completed research review or successful evaluation, **1** for failed evaluation scenarios, and **2** for a refused/rejected research run or an operational error. `corpus` prints JSON with source metadata and scope notices.
+```powershell
+.\.venv\Scripts\python.exe -m signal_research_agent run --mode llm --topic "Replicate the historical volatility research design" --lookback-months 6 --selection-count 3 --replication-rationale "Verify repeatability of the recorded experiment in a fresh process" --journal-dir artifacts/shared_journal --output-dir artifacts/llm_run_replication
+```
 
-## Fixed synthetic experiment
+Separate mocked acceptance, saved replay, and genuine-provider verification:
 
-The fixture contains 12 artificial assets and 121 month-end prices per asset, from December 2014 through December 2024. The generator uses seed 42, a common random factor, increasing asset-specific noise, and identical expected log-return drift. Every row has `synthetic: true`, an observation date, and an availability date. Parameters are chosen for a reproducible software exercise, without fitting real data or rerunning seeds until a desired verdict appears.
+```powershell
+.\.venv\Scripts\python.exe -m signal_research_agent evaluate --suite agentic --output-dir artifacts/agentic_evaluation
+.\.venv\Scripts\python.exe -m signal_research_agent replay --result artifacts/agentic_evaluation/batch_001/accepted_6_months_3_assets/result.json --output-dir artifacts/replay_example
+.\.venv\Scripts\python.exe scripts/run_live_verification.py --output-dir artifacts/live_verification
+```
 
-At each formation close, the strategy ranks sample standard deviations of the preceding 12 monthly simple returns and equally weights the four lowest-volatility assets. Alphabetical asset IDs resolve ties. It holds for the following month. The benchmark rebalances all 12 assets equally each month. This gives 108 evaluated monthly holding periods.
+The agentic acceptance suite uses explicitly scripted providers and zero real calls. The live script has no test doubles. It attempts A research, B persisted duplicate, C a deliberately injected validation condition, and D explicit 6/3 choices, with **at most 16 adapter attempts**, hence at most 16 provider calls including retries. It preserves failures in numbered batches and never searches for favorable outcomes. If A cannot complete, B/C/D remain unattempted and are recorded as incomplete.
 
-Both portfolios pay 10 basis points per unit of gross traded notional, including initial investment. Turnover uses absolute changes from weights drifted by prior asset returns; a full replacement has turnover 2. Costs reduce capital before the next return: `(1 - cost) * (1 + gross_return) - 1`. There is no final liquidation. `total_cost_fraction` sums period cost fractions and is not a currency amount or the cumulative performance drag. Sharpe uses the arithmetic mean and sample standard deviation of net monthly returns, a zero risk-free rate, and annualization by `sqrt(12)`. Maximum drawdown includes starting wealth of 1.
+Replay needs the original completed offline/LLM `result.json`, `audit.jsonl`, and `research_journal.jsonl` together. It verifies hashes and journal heads, then executes without any model call. A replay result cannot itself be used as the source. Exact equality and a `1e-12` numerical tolerance are recorded; larger differences require intervention. Same-interpreter scientific backtest replay is exact in tests; cross-version final bits and resulting chain hashes can differ.
 
-The same-close formation and execution convention assumes instant access and zero latency. Delayed availability is rejected, rather than backfilled. This simplifying assumption is visible in the lock and is unsuitable as a claim about executable real-market returns.
+Exit codes: `0` for completed research/replay or passing acceptance; `1` for failed acceptance; `2` for intervention, provider/configuration failure, duplicate/model deferral, or incomplete live verification. There is **no silent offline fallback**. Explicit statuses include `missing_credentials`, `provider_timeout`, `provider_error`, `provider_unavailable`, `budget_exhausted`, `revision_budget_exhausted`, `duplicate_deferred`, `model_deferred`, `grounding_failed`, `data_validation_failed`, and `replay_integrity_error`.
 
-The preregistered descriptive rule is `strategy_net_sharpe > benchmark_net_sharpe`. It does not test statistical significance. Review can return only:
+## What influences the experiment
 
-- `supported_in_synthetic_fixture_only`
-- `unsupported_in_synthetic_fixture`
-- `rejected`
+**Literature:** cosine TF-IDF with a small finance synonym map retrieves original summaries and stable metadata. This is lexical retrieval, not learned embeddings. The LLM receives the summaries themselves. Numerical prices and results remain structured data outside the text index. Declared literature claims require eligible IDs, exact summary excerpts, and limited lexical support. Invented IDs, altered metadata, fabricated excerpts, obvious overclaims, and some unsupported relationships are rejected. These checks **do not prove semantic entailment**; subtle misinformation and uncited factual prose still require human review.
 
-## Evaluation and measured results
+**Feedback and choices:** at most three initial candidates are assessed for grounding, methodology, feasibility, question fit, user constraints, and duplication. The beam retains at most two. An invalid selection gets concrete objections and parent IDs; the model can return at most two revised children in one revision round, or defer. A valid first response needs no revision. Four provider calls per run is a hard maximum, including at most one transport retry per round. No prices are generated before locking, and no calculated outcomes are used in candidate scores.
 
-The evaluation runner executes named software-acceptance scenarios for workflow completion, all roles, grounding, pre-outcome search, repeatability, refusals, malformed data, leakage, hypothesis tampering, chain integrity, gate stopping, and cost application. The separate unittest suite adds arithmetic checks and adversarial integration tests. Counts, timings, environment information, and sample metrics are recorded from actual executions in [evaluation_results.json](artifacts/evaluation/evaluation_results.json) and [verification_results.json](artifacts/evaluation/verification_results.json). These measure software behavior, not investment efficacy.
+Only total volatility is executable, with a 6- or 12-month lookback and 3 or 4 selected assets. The accepted LLM parameters actually drive the harness; they are agent design choices, not parameters established by the papers. Beta/idiosyncratic requests need an honestly named adaptation to total volatility or deferral. The offline path defers factor-specific requests instead of silently relabeling them. Its original five-node, depth-two tree and predefined monthly adaptation otherwise remain intact.
 
-Actual verification on Windows:
+**Memory:** shared `experiments.jsonl` is separate from literature and per-run outcome journals. Every read verifies its chain and strict schema. Completed records expose only substantive specifications, provenance IDs, and controlled methodological limitations to planning. They exclude prior returns, Sharpe ratios, profitability rankings, and performance verdicts. The scientific fingerprint excludes wording, explanations, timestamps, and source order, so paraphrasing cannot hide a duplicate.
 
-| Check | Measured result |
-|---|---|
-| Installed package, Python 3.13.5 | **97 tests passed**, 10.390 seconds in the test runner |
-| Acceptance evaluation, Python 3.13.5 | **31/31 passed**, 1.408 seconds |
-| Isolated source copy, fresh environment, Python 3.11.9 | Install succeeded; **97 tests passed**, 10.470 seconds |
-| Isolated copy CLI checks | Evaluation **31/31 passed**; example workflow and corpus command succeeded |
-| Offline execution | Full workflow passed with socket creation disabled in a test |
-| Publication scan | No detected credential patterns, unfinished/conflict markers, or trailing whitespace in intended files |
+A duplicate returns its prior reference and prevents execution without an explicit replication rationale. Every changed design axis needs an explicit user constraint when prior experiments exist; the model cannot change an unspecified parameter merely to escape duplication. Duplicate checks inspect all records, even when retrieval returns only four relevant records. A whole-run shared lease prevents cooperating processes from racing. Separate directories or deliberate filesystem edits can bypass this local boundary; it is not global research governance.
 
-Git operations and publication are left to the repository owner. Verification used an isolated source copy instead of creating a Git checkout, and full-file whitespace checks instead of running `git diff --check`.
+## Numerical harness, artifacts, and safety
 
-The two Python versions produced the same hypothesis ID, synthetic data hash, and verdict. Computed numeric fields differed by at most `3.56e-15`, which also changes downstream journal hashes. Exact byte replay passes within each tested interpreter; cross-version byte identity is not promised.
+Every mode fixes seed 42, 12 synthetic assets, 121 month-end prices from December 2014 through December 2024, benchmark, costs, calendar, and holding period. Each row explicitly marks `synthetic: true`. Twelve-month lookback gives 108 evaluated months; six months gives 114.
 
-Example console output from the documented research direction:
+The signal is trailing sample standard deviation of monthly simple returns known at formation. Selected lowest-volatility assets are equal weighted with alphabetical ties; the benchmark rebalances all assets equally each month. Both portfolios pay 10 bps times gross L1 turnover from drifted weights, including entry and excluding terminal liquidation. Net return is `(1 - cost) * (1 + gross_return) - 1`. Same-close execution assumes zero latency. Validation blocks duplicate/missing/nonfinite/nonpositive prices, insufficient/unequal histories, wrong calendars/universes, missing synthetic labels, and availability/as-of leakage.
+
+The independent numerical Skeptic checks both provenance and arithmetic. Bounded verdicts remain `supported_in_synthetic_fixture_only`, `unsupported_in_synthetic_fixture`, or `rejected`. The descriptive rule compares net Sharpe with a zero risk-free rate; it is not a significance test or market prediction. Synthetic data omit changing constituents, delistings, dividends, taxes, market impact, and realistic execution constraints.
+
+Each completed or refused workflow writes `result.json`, `research_report.md`, `audit.jsonl`, and `research_journal.jsonl`. LLM records include mode, prompt/schema versions, adapter-observed model/response IDs and usage, sanitized contexts, literature/memory IDs, candidates, scores, objections, revisions, lock, and intervention status. Existing valid journals append; derived summaries refresh. Operational failures involving corrupt journals, stale locks, or permissions preserve existing artifacts.
+
+Input screening occurs before any provider call. English scope and injection rules are conservative and incomplete; evidence is treated as data, never permission to change policy. The model has no tools, generated-code execution, orders, brokerage access, or personalized-advice capability. Secrets, raw authentication headers, raw provider exceptions, and private reasoning are not persisted.
+
+Local SHA-256 chains detect edits against existing links, not complete rewrites or valid-tail deletion without an external checkpoint. They are not signed preregistrations. Role independence means separate code and numerical checks in one process, not isolated services or human peer review.
+
+## Verification and evidence
+
+The current source baseline was established before editing: **97 tests passed in 18.273 seconds; 31/31 acceptance scenarios passed**. The final installed suite passed **214 tests in 41.479s**; the clean Python 3.11 base installation passed **214 tests in 46.083s**. Offline acceptance passed **31/31** in **1.594s**, and scripted-provider acceptance passed **12/12** in **1.526s**. Details are recorded in [capstone_evidence.md](docs/capstone_evidence.md) and [unit results](artifacts/extension_verification/unit_test_results.json). Inspect [offline acceptance](artifacts/offline_evaluation/evaluation_results.json), [mocked agentic acceptance](artifacts/agentic_evaluation/evaluation_results.json), and [live status](artifacts/live_verification/live_verification_results.json) separately.
+
+The preserved offline fixture has strategy net annualized return 4.7979% and Sharpe 0.986008, versus benchmark 5.8774% and 0.857269 over 108 **synthetic** months. These are not real investment results. The [mocked 6/3 report](artifacts/agentic_evaluation/batch_001/accepted_6_months_3_assets/research_report.md) shows 114 observations; the [feedback trace](artifacts/agentic_evaluation/batch_001/feedback_revision/research_report.md) and [duplicate deferral](artifacts/agentic_evaluation/batch_001/memory_second/result.json) show actual application behavior with a test double.
+
+Git commands and publication remain with the repository owner. This extension uses isolated source copies and full-file whitespace/conflict-marker scans instead of Git commands. It does not claim a pushed commit or newly published repository.
+
+## Repository map and evolution
 
 ```text
-Offline MVP | Deterministic synthetic data | Historical research only | Not investment advice | No trade execution | Not evidence of future performance
-Status: completed
-Verdict: supported_in_synthetic_fixture_only
-Human intervention required: False
-Synthetic observations: 108
-Synthetic strategy: annualized return=4.7979%, volatility=4.8814%, Sharpe=0.986008
-Synthetic benchmark: annualized return=5.8774%, volatility=6.9562%, Sharpe=0.857269
-Artifacts: artifacts/run
+src/signal_research_agent/
+  coordinator.py, llm_workflow.py     routing, gates, feedback, replay
+  hypothesis.py, llm_design.py       offline tree and strict LLM protocol
+  provider.py, experiment.py         optional SDK and executable contracts
+  retrieval.py, data/literature.json public grounding
+  memory.py, journal.py              safe shared memory and chained audit
+  data_engineer.py, backtester.py    synthetic data and numerical experiment
+  skeptic.py, safety.py              independent review and boundaries
+  cli.py, evaluation.py              CLI and preserved offline acceptance
+  agentic_evaluation.py              explicitly mocked acceptance evidence
+scripts/run_live_verification.py     real-provider batch, maximum 16 attempts
+tests/test_*.py                      numerical, protocol, memory, SDK, workflow
+docs/architecture.md                 detailed contracts and formulas
+docs/capstone_evidence.md            report/presentation handoff
+artifacts/                           preserved baseline and new evidence
 ```
 
-Measured **synthetic fixture only** metrics:
+The earlier prototype had predetermined hypotheses and passive journals. This extension adds model-authored executable designs, actual feedback revisions, active outcome-free memory, duplicate deferral, explicit replication, and verified replay. Future work includes broader human-reviewed literature, stronger claim-support checks, externally timestamped locks, process isolation, additional factor-aware harnesses, and point-in-time public-market research data with holdout and multiple-testing controls. None is claimed as implemented.
 
-| Metric | Low-volatility strategy | Equal-weight benchmark |
-|---|---:|---:|
-| Net cumulative return | 52.4657% | 67.1980% |
-| Net annualized return | 4.7979% | 5.8774% |
-| Annualized volatility | 4.8814% | 6.9562% |
-| Sharpe, zero risk-free rate | 0.986008 | 0.857269 |
-| Maximum drawdown | -8.2936% | -9.4275% |
-| Average monthly gross turnover | 0.130212 | 0.033161 |
-| Sum of period cost fractions | 0.014063 | 0.003581 |
-| Evaluated months | 108 | 108 |
+## Public research
 
-The strategy has a higher Sharpe but a lower absolute return in this fixture. The bounded verdict follows the locked Sharpe comparison. None of these numbers supports a conclusion about real stocks or future performance.
-
-See the checked-in [console summary](artifacts/evaluation/sample_console_output.txt), [sample research report](artifacts/evaluation/sample_run/research_report.md), and [structured sample](artifacts/evaluation/sample_run/result.json). Runtime timings vary by machine; replay assertions compare research artifacts, not benchmark timing fields.
-
-## Safety and human intervention
-
-Transparent English pattern rules reject trade/order actions, brokerage access, personalized advice, sensitive/private/proprietary data, empty directions, and materially ambiguous or out-of-scope requests. Refused request text is not copied into the journals or report. Accepted public research directions are recorded. The filter is intentionally conservative, can reject negations, and cannot reliably understand arbitrary language or detect every secret; do not submit sensitive information. The CLI accepts a topic, not uploaded data or credentials.
-
-Human intervention is required when grounding is insufficient or explicitly conflicting, validation fails, observation/availability leakage appears, a lock changes, a request crosses the research boundary, or the review cannot support a reliable synthetic-fixture conclusion. Failure stops downstream work; it does not automatically relax a constraint, fetch new data, or retry until a favorable outcome appears. Normal unsupported fixture results are valid completed research outcomes.
-
-Journals use canonical SHA-256 chaining, append-only writes, writer locks, and flush-to-disk. Corrupt existing journals are refused. Hashes detect changes against the current chain, but cannot establish truth, resist a writer who recomputes the entire chain, or detect deletion of a valid tail without an external checkpoint. Sidecar `.lock` files left after a crash require operator inspection before removal. Neither journal is a security sandbox or a signed third-party preregistration service.
-
-## Repository map
-
-```text
-investment-signal-research-agent/
-├── README.md, LICENSE, .gitignore
-├── pyproject.toml, requirements.txt
-├── docs/architecture.md
-├── src/signal_research_agent/
-│   ├── __init__.py, __main__.py, cli.py, models.py
-│   ├── coordinator.py, hypothesis.py, data_engineer.py
-│   ├── backtester.py, skeptic.py
-│   ├── retrieval.py, safety.py, journal.py, evaluation.py
-│   └── data/literature.json
-├── scripts/run_evaluation.py
-├── tests/test_*.py
-└── artifacts/evaluation/
-    ├── evaluation_results.json, sample_console_output.txt
-    ├── verification_results.json, test_console_output.txt
-    └── sample_run/
-        ├── result.json, research_report.md
-        └── audit.jsonl, research_journal.jsonl
-```
-
-## Limitations and planned improvements
-
-This is a deterministic offline MVP. There is no CrewAI, LangGraph, MCP integration, vector database, or LLM in the repository. Role independence means separate components and independent checks within one process; it is not process isolation or independent human judgment. The curated corpus is small, conflicts are curated metadata rather than automatically inferred scientific disagreement, and retrieval has limited vocabulary. The only executable signal is monthly total volatility.
-
-Synthetic prices omit dividends, corporate actions, taxes, delistings, changing universe membership, capacity, and real execution constraints. A balanced fabricated universe cannot resolve survivorship bias. No significance test, uncertainty interval, holdout tuning study, real-market validation, or generalization claim is made. Python floating-point math may differ in its final bits across platforms; exact replay is tested in the documented environment. Per-run files and journals are local and are not a production multi-user database.
-
-Planned production work includes a reviewed point-in-time public-data adapter, factor-aware hypotheses, immutable externally timestamped preregistration, richer retrieval with source review, process isolation, broader multilingual safety evaluation, holdout and multiple-testing controls, and more realistic execution assumptions. CrewAI/LangGraph, MCP tools, embeddings, and an LLM are possible future architecture choices, not implemented features. Any production research system should retain the research-only boundary.
-
-## Public sources
-
-The corpus contains original summaries and metadata, not copies of papers or numerical datasets. Linked versions sometimes differ from subsequent journal publication years; metadata records that distinction. The Fama/French library pages describe methodology and do not supply prices to this MVP.
+The corpus contains short original summaries and version-aware metadata, not copied papers or numerical datasets:
 
 1. Ang, Hodrick, Xing, and Zhang, [The Cross-Section of Volatility and Expected Returns](https://www.nber.org/papers/w10852).
 2. Baker, Bradley, and Wurgler, [Benchmarks as Limits to Arbitrage: Understanding the Low-Volatility Anomaly](https://archive.nyu.edu/handle/2451/29593).
@@ -227,6 +185,4 @@ The corpus contains original summaries and metadata, not copies of papers or num
 5. Fama/French Data Library, [Portfolios Formed Monthly on Variance](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_port_form_VAR.html).
 6. Fama/French Data Library, [Description of Fama/French Factors](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/f-f_factors.html).
 
-See [architecture.md](docs/architecture.md) for component contracts, formulas, and the integrity threat model. The original code and original corpus summaries are MIT licensed; external research remains the property of its respective authors and publishers.
-
-**Deterministic synthetic data. Historical research only. Not investment advice. No trade execution. Not evidence of future performance.**
+The monthly synthetic experiment is an educational adaptation, not a replication of those empirical studies. Code and original summaries are MIT licensed; external research remains owned by its authors and publishers.

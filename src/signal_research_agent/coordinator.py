@@ -3,6 +3,7 @@
 from copy import deepcopy
 import json
 import os
+import re
 from pathlib import Path
 
 from .backtester import Backtester
@@ -17,8 +18,13 @@ from .skeptic import Skeptic
 DEFAULT_TOPIC = "Explore whether lower-volatility stocks have better risk-adjusted returns"
 
 
-def search_gate(search):
+def search_gate(search, mode="offline"):
     """Check the recorded tree and limits before any data or backtest access."""
+    if mode in ("llm", "replay"):
+        from .llm_workflow import planning_gate
+        return planning_gate(search, mode)
+    if mode != "offline":
+        return False
     try:
         return (
             search["method"] == "bounded_deterministic_beam_search"
@@ -53,7 +59,7 @@ def write_json(path, value):
 
 def render_report(result):
     lines = ["# Investment Signal Research Agent", "",
-             "**" + " | ".join(SAFETY_NOTICES) + "**", "",
+             "**" + " | ".join(result.get("safety_notices", SAFETY_NOTICES)) + "**", "",
              f"Run: `{result['run_id']}`", "",
              f"Status: **{result['status']}**", "",
              f"Verdict: **{result['verdict']}**", "",
@@ -69,9 +75,12 @@ def render_report(result):
                   "```json", json.dumps(lock["specification"], indent=2), "```", ""]
     search = result.get("hypothesis_search")
     if search:
-        lines += ["## Bounded pre-outcome search", "",
-                  "Candidates: total volatility, beta, and idiosyncratic volatility. "
-                  "Ranking uses literature coverage and fixed-harness feasibility only.", "",
+        explanation = ("Candidates: total volatility, beta, and idiosyncratic volatility. "
+                       "Ranking uses literature coverage and fixed-harness feasibility only."
+                       if result.get("execution_mode", "offline") == "offline" else
+                       "Structured proposals, deterministic observations, and any actual feedback "
+                       "are recorded below. No calculated outcomes are used for planning.")
+        lines += ["## Bounded pre-outcome search", "", explanation, "",
                   "```json", json.dumps(search, indent=2), "```", ""]
     if result.get("evidence"):
         lines += ["## Public grounding", ""]
@@ -97,6 +106,14 @@ def render_report(result):
         lines += ["", "Methodology:", "", "```json",
                   json.dumps(backtest.get("methodology", {}), indent=2), "```", ""]
     review = result["review"]
+    if result.get("execution_mode") in ("llm", "replay"):
+        lines += ["## Execution provenance and persistent memory", "", "```json",
+                  json.dumps({key: result.get(key) for key in (
+                      "execution_mode", "provider_execution", "memory_context", "duplicate_reference",
+                      "replication_rationale", "replay_provenance", "controlled_validation")}, indent=2),
+                  "```", "",
+                  "Citation checks verify eligible IDs, exact summary excerpts, and limited lexical support. "
+                  "They are not a proof of entailment; human review of the source-to-claim relationship remains necessary.", ""]
     lines += ["## Independent skeptical review", "",
               f"Confidence: {review.get('confidence', 'none')}", ""]
     for label in ("objections", "limitations"):
@@ -123,7 +140,19 @@ class Coordinator:
         self.backtester = backtester or Backtester()
         self.skeptic = skeptic or Skeptic()
 
-    def run(self, topic, output_dir):
+    def run(self, topic, output_dir, *, mode="offline", journal_dir=None, provider=None,
+            model=None, replication_rationale=None, constraints=None,
+            max_provider_calls=4, controlled_validation=None):
+        if mode == "llm":
+            from .llm_workflow import run_llm
+            return run_llm(self, topic, output_dir, journal_dir=journal_dir, provider=provider,
+                           model=model, replication_rationale=replication_rationale,
+                           constraints=constraints, max_provider_calls=max_provider_calls,
+                           controlled_validation=controlled_validation)
+        if mode != "offline":
+            raise ResearchError("Use the replay command for saved specifications; unknown run mode.")
+        if journal_dir is not None or replication_rationale or constraints:
+            raise ResearchError("Shared planning memory and parameter choices require explicit LLM mode.")
         output = Path(output_dir)
         output.mkdir(parents=True, exist_ok=True)
         lease = output / ".run.lock"
@@ -150,7 +179,7 @@ class Coordinator:
                                  "event": name, "details": deepcopy(details),
                                  "safety_notices": list(SAFETY_NOTICES)})
 
-        result = {"schema_version": "1.0", "run_id": run_id,
+        result = {"schema_version": "1.0", "run_id": run_id, "execution_mode": "offline",
                   "safety_notices": list(SAFETY_NOTICES),
                   "status": "rejected", "verdict": "rejected",
                   "requires_human_intervention": True, "topic": None,
@@ -195,6 +224,9 @@ class Coordinator:
             return finish()
         result["topic"] = topic
         event("Coordinator", "request_accepted", {"topic": topic, "guardrail": guard})
+        if re.search(r"\bbeta\b|idiosyncratic|residual.volatility", topic, re.I):
+            reject("The offline harness supports total volatility only. Factor-based research needs an explicitly explained adaptation in LLM mode or human intervention.")
+            return finish()
         try:
             evidence = self.retriever.search(topic, limit=6)
             for source in self.retriever.search("backtesting research protocol overfitting", limit=6):

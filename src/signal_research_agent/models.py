@@ -13,6 +13,16 @@ SAFETY_NOTICES = (
 )
 
 
+def scope_notices(mode="offline"):
+    """Keep the legacy offline label, while accurately naming network/replay modes."""
+    if mode == "offline":
+        return SAFETY_NOTICES
+    labels = {"llm": "LLM-assisted research MVP", "replay": "Deterministic saved-specification replay"}
+    if mode not in labels:
+        raise ResearchError("Unknown execution mode")
+    return (labels[mode], *SAFETY_NOTICES[1:], "Not evidence about real markets")
+
+
 class ResearchError(ValueError):
     """An expected research gate or unsupported specification failure."""
 

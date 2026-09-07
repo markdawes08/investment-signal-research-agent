@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "elapsed_seconds": 41.670032,
+  "tests_run": 214,
+  "runner_elapsed_seconds": 41.479,
+  "passed": true,
+  "python": "3.13.5",
+  "safety_notices": [
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "mocked_provider_tests": true
+}

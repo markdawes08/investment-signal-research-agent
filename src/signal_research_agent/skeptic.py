@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import math
+import re
 import statistics
 from calendar import monthrange
 from datetime import date as Date
 
 from .journal import verify_entries
-from .models import content_hash
+from .models import content_hash, scope_notices
 from .retrieval import LiteratureRetriever
 
 
@@ -34,8 +35,7 @@ class Skeptic:
                 "verdict": "rejected",
                 "objections": ["Malformed review inputs prevent a reliable independent conclusion."],
                 "limitations": [
-                    "Offline MVP. Deterministic synthetic data. Historical research only.",
-                    "Not investment advice. No trade execution. Not evidence of future performance.",
+                    " | ".join(scope_notices(_review_mode(lock, audit_entries))),
                     "No conclusion about synthetic or real-market performance is supported by this review.",
                 ],
                 "confidence": "low",
@@ -69,6 +69,8 @@ class Skeptic:
             and lock.get("hypothesis_id") == "hyp-v1-" + digest[:16],
             "The hypothesis lock, content hash, or stable identifier is invalid.",
         )
+        check("supported_specification", _supported_specification(specification),
+              "The locked experiment violates the independently checked mode-aware contract.")
         check("grounding", _grounding(specification, evidence), "Grounding is insufficient, conflicting, or differs from the trusted local corpus.")
         check("audit_chain", verify_entries(audit_entries), "The supplied audit chain is malformed or altered.")
         payloads = [entry.get("payload", {}) for entry in audit_entries if isinstance(entry, dict)]
@@ -123,8 +125,7 @@ class Skeptic:
             "verdict": verdict,
             "objections": objections,
             "limitations": [
-                "Offline MVP using deterministic synthetic data; historical research only.",
-                "Not investment advice. No trade execution. Not evidence of future performance.",
+                " | ".join(scope_notices(_review_mode(lock, audit_entries))),
                 "Synthetic returns are not empirical evidence about real markets or expected profits.",
                 "A single fixture and zero-risk-free Sharpe comparison do not establish statistical significance or causality.",
                 "The fixed universe omits delistings, changing constituents, taxes, market impact, and corporate actions.",
@@ -145,6 +146,50 @@ def _safe_hash(value: object) -> str:
         return "invalid"
 
 
+def _review_mode(lock: object, entries: object) -> str:
+    if isinstance(entries, list):
+        for entry in reversed(entries):
+            payload = entry.get("payload", {}) if isinstance(entry, dict) else {}
+            if not isinstance(payload, dict):
+                continue
+            if payload.get("event") == "request_accepted":
+                details = payload.get("details", {})
+                mode = details.get("mode") if isinstance(details, dict) else None
+                if mode in ("llm", "replay"):
+                    return mode
+    if isinstance(lock, dict) and isinstance(lock.get("specification"), dict):
+        if lock["specification"].get("design_mode") == "llm":
+            return "llm"
+    return "offline"
+
+
+def _supported_specification(specification: dict) -> bool:
+    """Independently enforce the supported design, not the harness's validator."""
+    fixed = {
+        "version": "1.0", "signal": "trailing_sample_std_monthly_returns",
+        "universe": [f"SYN{index:02d}" for index in range(1, 13)],
+        "holding_months": 1, "benchmark": "monthly_rebalanced_equal_weight_universe",
+        "cost_bps": 10.0, "risk_free_rate": 0.0, "as_of_date": "2024-12-31",
+        "min_observations": 36, "success_rule": "strategy_net_sharpe > benchmark_net_sharpe",
+        "seed": 42, "generator_version": "synthetic-monthly-v1",
+        "start_date": "2014-12-31", "n_months": 121,
+    }
+    mode = specification.get("design_mode", "offline")
+    if mode not in ("llm", "offline"):
+        return False
+    for key, expected in fixed.items():
+        actual = specification.get(key)
+        if type(expected) is float:
+            if type(actual) not in (int, float) or actual != expected:
+                return False
+        elif type(actual) is not type(expected) or actual != expected:
+            return False
+    choices = {"lookback_months": (6, 12) if mode == "llm" else (12,),
+               "selection_count": (3, 4) if mode == "llm" else (4,)}
+    return all(type(specification.get(key)) is int and specification[key] in allowed
+               for key, allowed in choices.items())
+
+
 def _grounding(specification: dict, evidence: list[dict]) -> bool:
     try:
         trusted = {item["id"]: item for item in LiteratureRetriever().sources}
@@ -161,9 +206,87 @@ def _grounding(specification: dict, evidence: list[dict]) -> bool:
             if set(supplied[source_id]) - (set(trusted[source_id]) | {"score"}):
                 return False
         stances = {item["stance"] for item in supplied.values()}
-        return "supports_total_volatility_research" in stances and "methodological_caution" in stances and not stances.intersection({"conflicting", "opposes", "contradicts", "negative"})
+        if not ("supports_total_volatility_research" in stances and "methodological_caution" in stances and not stances.intersection({"conflicting", "opposes", "contradicts", "negative"})):
+            return False
+        if specification.get("design_mode") == "llm":
+            if not _research_label_valid(specification):
+                return False
+            if not _planning_prose_valid([specification.get(key) for key in (
+                    "research_claim", "decision_rationale", "adaptation_rationale",
+                    "agent_assumptions", "limitations", "evidence_claims")]):
+                return False
+            claims = specification.get("evidence_claims")
+            if not isinstance(claims, list) or not 2 <= len(claims) <= 6:
+                return False
+            cited_stances = set()
+            for claim in claims:
+                if not isinstance(claim, dict) or set(claim) != {"claim", "source_id", "summary_excerpt"}:
+                    return False
+                source = supplied.get(claim["source_id"])
+                if (source is None or not isinstance(claim["claim"], str)
+                        or not 20 <= len(claim["claim"]) <= 800
+                        or not isinstance(claim["summary_excerpt"], str)
+                        or not 30 <= len(claim["summary_excerpt"]) <= 1200
+                        or claim["summary_excerpt"] not in source["summary"]):
+                    return False
+                cited_stances.add(source["stance"])
+            if not {"supports_total_volatility_research", "methodological_caution"}.issubset(cited_stances):
+                return False
+            if specification.get("parameter_basis") != "agent_design_choice":
+                return False
+        return True
     except (KeyError, TypeError, ValueError, OverflowError):
         return False
+
+
+def _research_label_valid(specification: dict) -> bool:
+    """Independently distinguish the executed signal from unavailable designs.
+
+    This conservative label check is not natural-language entailment. It prevents
+    a total-return standard-deviation calculation being presented as a beta or
+    residual-volatility experiment, even when its hashes are internally valid.
+    """
+    claim = specification.get("research_claim")
+    topic = specification.get("topic")
+    adaptation = specification.get("adaptation_rationale") or ""
+    if not all(isinstance(item, str) for item in (claim, topic, adaptation)):
+        return False
+    total = r"\b(total|trailing|overall)[ -]+(?:return[ -]+)?volatility\b"
+    requested = []
+    if re.search(r"\bbeta\b", topic, flags=re.I):
+        requested.append(r"\bbeta\b")
+    if re.search(r"\bidiosyncratic\b|\bresidual[ -]+volatility\b", topic, flags=re.I):
+        requested.append(r"\b(idiosyncratic|residual)\b")
+    if requested:
+        if not re.search(total, claim, flags=re.I) or not re.search(total, adaptation, flags=re.I):
+            return False
+        if any(not re.search(pattern, adaptation, flags=re.I) for pattern in requested):
+            return False
+        if not re.search(r"\b(distinct|different|alternative|instead|unavailable|cannot|unsupported)\b", adaptation, flags=re.I):
+            return False
+    for signal in re.finditer(r"\b(beta|idiosyncratic|residual)\b", claim, flags=re.I):
+        prefix = claim[max(0, signal.start() - 45):signal.start()]
+        suffix = claim[signal.end():signal.end() + 25]
+        excluded_before = re.search(r"\b(not|rather than|instead of|distinct from|different from|unlike|without)\b[^.;]{0,30}$", prefix, flags=re.I)
+        excluded_after = re.match(r"\s+(?:is\s+)?(?:not tested|is unavailable|remains untested)\b", suffix, flags=re.I)
+        if not excluded_before and not excluded_after:
+            return False
+    return True
+
+
+def _planning_prose_valid(value: object) -> bool:
+    """Reject purported pre-lock numeric performance in supplied narratives."""
+    if isinstance(value, dict):
+        return all(_planning_prose_valid(item) for item in value.values())
+    if isinstance(value, list):
+        return all(_planning_prose_valid(item) for item in value)
+    if not isinstance(value, str):
+        return True
+    percentage = r"\b\d+(?:\.\d+)?\s*(?:%|percent\b)"
+    metric_number = (r"\b(?:sharpe(?:\s+ratio)?|(?:cumulative|annualized|net)\s+return|"
+                     r"annualized\s+volatility|maximum\s+drawdown)\b\s*"
+                     r"(?:(?:is|was|of|equals|exceeded)\s*)?[:=<>]?\s*-?\d+(?:\.\d+)?\b")
+    return re.search(percentage + "|" + metric_number, value, flags=re.I) is None
 
 
 def _audit_checks(current: list[dict], lock: dict, evidence: list[dict], validation: dict, backtest: dict, rows: list[dict] | None) -> dict[str, bool]:
@@ -181,6 +304,11 @@ def _audit_checks(current: list[dict], lock: dict, evidence: list[dict], validat
               "recorded_evidence_unchanged": False, "recorded_validation_unchanged": False,
               "recorded_backtest_unchanged": False, "bounded_search": False}
     if not current:
+        return result
+    mode = current[0].get("details", {}).get("mode", "offline")
+    if mode in ("llm", "replay"):
+        return _agentic_audit_checks(current, lock, evidence, validation, backtest, rows, mode)
+    if lock.get("specification", {}).get("design_mode", "offline") != "offline":
         return result
     events = [(item.get("role"), item.get("event")) for item in current]
     filtered = [event for event in events if event != ("Hypothesis Generator", "hypothesis_revised")]
@@ -214,6 +342,13 @@ def _audit_checks(current: list[dict], lock: dict, evidence: list[dict], validat
 def _bounded_search(search: dict) -> bool:
     """Inspect the search attestation in addition to requiring its pre-lock order."""
     try:
+        if search.get("method") == "llm_bounded_candidate_search":
+            return _llm_bounded_search(search)
+        if search.get("method") == "saved_specification_replay":
+            return (search.get("outcome_access") is False
+                    and type(search.get("provider_calls")) is int and search["provider_calls"] == 0
+                    and _digest_string(search.get("original_search_hash"))
+                    and _digest_string(search.get("saved_lock_hash")))
         alternatives = search["alternatives"]
         trace = search["trace"]
         revisions = search["revisions"]
@@ -236,6 +371,172 @@ def _bounded_search(search: dict) -> bool:
         )
     except (AttributeError, KeyError, TypeError, ValueError):
         return False
+
+
+def _digest_string(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+
+
+def _llm_bounded_search(search: dict) -> bool:
+    """Check actual nodes, parent links, assessment scores and revision bounds."""
+    try:
+        limits = {"max_initial_candidates": 3, "beam_width": 2, "max_depth": 2,
+                  "max_revisions": 1, "max_provider_calls": 4}
+        if (search.get("mode") != "llm" or search.get("outcome_access") is not False
+                or any(type(search.get(key)) is not int or search[key] != value for key, value in limits.items())
+                or type(search.get("provider_calls")) is not int or not 1 <= search["provider_calls"] <= 4):
+            return False
+        rounds = search["rounds"]
+        if not isinstance(rounds, list) or not 1 <= len(rounds) <= 2:
+            return False
+        feedback = search["feedback"]
+        if not isinstance(feedback, list) or len(feedback) != len(rounds) - 1:
+            return False
+        previous_ids, visited = set(), set()
+        accepted = {}
+        for depth, round_record in enumerate(rounds, 1):
+            if type(round_record["depth"]) is not int or round_record["depth"] != depth:
+                return False
+            proposal = round_record["proposal"]
+            if not _planning_prose_valid([proposal.get("decision_rationale"), proposal.get("deferral_reason")]):
+                return False
+            nodes, assessments, retained = proposal["candidates"], round_record["candidates"], round_record["retained"]
+            if (proposal["action"] != ("propose" if depth == 1 else "revise")
+                    or not isinstance(nodes, list) or not 1 <= len(nodes) <= (3 if depth == 1 else 2)
+                    or not isinstance(assessments, list) or len(nodes) != len(assessments)
+                    or not isinstance(retained, list) or not 1 <= len(retained) <= 2
+                    or len(set(retained)) != len(retained)):
+                return False
+            ids = [node["id"] for node in nodes]
+            if (any(not isinstance(identifier, str) or not identifier for identifier in ids)
+                    or len(set(ids)) != len(ids) or visited.intersection(ids) or not set(retained).issubset(ids)):
+                return False
+            visited.update(ids)
+            for node, assessment in zip(nodes, assessments):
+                if ((depth == 1 and node["parent_id"] is not None)
+                        or (depth == 2 and node["parent_id"] not in previous_ids)):
+                    return False
+                if _safe_hash(node) != _safe_hash(assessment["candidate"]):
+                    return False
+                if type(assessment["valid"]) is not bool or not isinstance(assessment["errors"], list):
+                    return False
+                if assessment["valid"] != (assessment["errors"] == []):
+                    return False
+                factors = assessment["score_breakdown"]
+                maxima = {"grounding": 3, "methodological_suitability": 2, "feasibility": 3, "question_fit": 2}
+                if not isinstance(factors, dict) or set(factors) != set(maxima):
+                    return False
+                if any(type(factors[key]) not in (int, float) or not math.isfinite(factors[key])
+                       or not 0 <= factors[key] <= upper for key, upper in maxima.items()):
+                    return False
+                if type(assessment["score"]) not in (int, float) or not _close(assessment["score"], sum(factors.values())):
+                    return False
+                if assessment["valid"] and node["id"] in retained:
+                    accepted[node["id"]] = assessment
+            ranked = sorted(assessments, key=lambda item: (not item["valid"], -item["score"], item["candidate"]["id"]))
+            if retained != [item["candidate"]["id"] for item in ranked[:2]]:
+                return False
+            previous_ids = set(retained)
+        if len(rounds) == 2:
+            prior = rounds[0]
+            feedback_record = feedback[0]
+            if (not isinstance(feedback_record, dict) or feedback_record.get("round") != 2
+                    or not isinstance(feedback_record.get("objections"), list) or not feedback_record["objections"]
+                    or any(not isinstance(item, str) or not item.strip() for item in feedback_record["objections"])
+                    or feedback_record.get("parent_ids") != prior["retained"]):
+                return False
+            parents = {node["candidate"]["id"]: node["candidate"] for node in prior["candidates"]}
+            if _safe_hash(feedback_record.get("candidates")) != _safe_hash([parents[key] for key in prior["retained"]]):
+                return False
+        selected = search["selected_candidate_id"]
+        if (selected not in accepted or selected not in previous_ids
+                or selected != rounds[-1]["proposal"]["selected_candidate_id"]):
+            return False
+        assessment = accepted[selected]
+        if assessment.get("duplicate_reference") and not search.get("replication_rationale"):
+            return False
+        return _safe_hash(search["selected_candidate"]) == _safe_hash(assessment["candidate"])
+    except (AttributeError, KeyError, TypeError, ValueError, OverflowError):
+        return False
+
+
+def _search_matches_lock(search: dict, lock: dict) -> bool:
+    if search.get("method") != "llm_bounded_candidate_search":
+        return lock.get("specification", {}).get("design_mode", "offline") == "offline"
+    candidate, specification = search["selected_candidate"], lock["specification"]
+    pairs = {"id": "candidate_id", "lookback_months": "lookback_months", "selection_count": "selection_count",
+             "research_claim": "research_claim", "evidence_claims": "evidence_claims", "assumptions": "agent_assumptions",
+             "decision_rationale": "decision_rationale", "limitations": "limitations",
+             "parameter_basis": "parameter_basis", "adaptation_rationale": "adaptation_rationale"}
+    return (specification.get("design_mode") == "llm" and candidate.get("signal") == "total_volatility"
+            and all(_safe_hash(candidate.get(left)) == _safe_hash(specification.get(right))
+                    for left, right in pairs.items()))
+
+
+def _agentic_audit_checks(current: list[dict], lock: dict, evidence: list[dict], validation: dict,
+                          backtest: dict, rows: list[dict] | None, mode: str) -> dict[str, bool]:
+    result = {"outcome_isolation": False, "recorded_lock_unchanged": False,
+              "recorded_evidence_unchanged": False, "recorded_validation_unchanged": False,
+              "recorded_backtest_unchanged": False, "bounded_search": False}
+    try:
+        events = [(item.get("role"), item.get("event")) for item in current]
+        details = {item.get("event"): item.get("details", {}) for item in current}
+        search = details["search_completed"]
+        suffix = [("Hypothesis Generator", "search_completed"), ("Hypothesis Generator", "hypothesis_locked"),
+                  ("Data Engineer", "data_generated"), ("Data Engineer", "data_validated"),
+                  ("Backtester", "backtest_started"), ("Backtester", "backtest_completed")]
+        ordered = events[:2] == [("Coordinator", "request_accepted"), ("Hypothesis Generator", "evidence_retrieved")]
+        ordered = ordered and events[-6:] == suffix
+        one_run = (len({item.get("run_id") for item in current}) == 1
+                   and isinstance(current[0].get("run_id"), str) and bool(current[0]["run_id"]))
+        search_valid = _bounded_search(search)
+        if mode == "replay":
+            ordered = ordered and events[2:-6] == [("Coordinator", "replay_loaded")]
+            replay = details["replay_loaded"]
+            original = replay["original_search"]
+            search_valid = (search_valid and search["method"] == "saved_specification_replay"
+                            and _bounded_search(original) and _search_matches_lock(original, lock)
+                            and search["saved_lock_hash"] == replay["saved_lock_hash"] == lock["content_hash"]
+                            and search["original_search_hash"] == replay["original_search_hash"] == _safe_hash(original)
+                            and _digest_string(replay["source_result_hash"])
+                            and _digest_string(replay["original_audit_head"]))
+        else:
+            ordered = ordered and events[2] == ("Coordinator", "memory_retrieved")
+            position, calls = 3, []
+            for depth, round_record in enumerate(search["rounds"], 1):
+                if depth == 2:
+                    ordered = ordered and events[position] == ("Coordinator", "feedback_issued")
+                    feedback = current[position]["details"]
+                    ordered = (ordered and feedback["round"] == 2
+                               and _safe_hash(feedback) == _safe_hash(search["feedback"][0])
+                               and feedback["parent_ids"] == search["rounds"][0]["retained"])
+                    position += 1
+                round_calls = []
+                while position < len(events) and events[position] == ("Hypothesis Generator", "provider_call_completed"):
+                    call = current[position]["details"]
+                    calls.append(call)
+                    round_calls.append(call)
+                    ordered = ordered and call["call_index"] == len(calls) and call["round"] == depth
+                    position += 1
+                ordered = (ordered and bool(round_calls) and events[position] == ("Coordinator", "candidates_assessed")
+                           and _safe_hash(current[position]["details"]) == _safe_hash(round_record)
+                           and _safe_hash(round_calls[-1]["output"]) == _safe_hash(round_record["proposal"]))
+                position += 1
+            ordered = ordered and position == len(events) - 6 and len(calls) == search["provider_calls"]
+            search_valid = search_valid and search["method"] == "llm_bounded_candidate_search" and _search_matches_lock(search, lock)
+        generated, started = details["data_generated"], details["backtest_started"]
+        result["outcome_isolation"] = (ordered and one_run and validation.get("passed") is True
+                                        and generated.get("data_hash", generated.get("hash")) == validation.get("data_hash")
+                                        and rows is not None and generated.get("row_count") == len(rows)
+                                        and started.get("hypothesis_hash", started.get("hash")) == lock.get("content_hash"))
+        result["recorded_lock_unchanged"] = _safe_hash(details["hypothesis_locked"]) == _safe_hash(lock)
+        result["recorded_evidence_unchanged"] = _safe_hash(details["evidence_retrieved"].get("evidence")) == _safe_hash(evidence)
+        result["recorded_validation_unchanged"] = _safe_hash(details["data_validated"]) == _safe_hash(validation)
+        result["recorded_backtest_unchanged"] = _safe_hash(details["backtest_completed"]) == _safe_hash(backtest)
+        result["bounded_search"] = bool(search_valid)
+        return result
+    except (AttributeError, KeyError, TypeError, ValueError, IndexError, OverflowError):
+        return result
 
 
 def _rows_valid(rows: list[dict], specification: dict) -> bool:

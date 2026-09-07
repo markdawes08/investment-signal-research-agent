@@ -1,0 +1,59 @@
+{
+  "schema_version": "2.0",
+  "execution_mode": "llm",
+  "run_id": "run-4faa770189f56e45",
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "topic": null,
+  "status": "request_refused",
+  "verdict": "rejected",
+  "requires_human_intervention": true,
+  "evidence": [],
+  "memory_context": [],
+  "hypothesis_search": null,
+  "hypothesis_lock": null,
+  "data_validation": null,
+  "backtest": null,
+  "duplicate_reference": null,
+  "replication_rationale": null,
+  "planning_contexts": [],
+  "provider_execution": {
+    "calls_attempted": 0,
+    "actual_provider_calls": 0,
+    "calls": [],
+    "token_usage": null,
+    "cost_usd": null,
+    "live_execution_verified": false
+  },
+  "input_guardrail": {
+    "allowed": false,
+    "code": "sensitive_data",
+    "reason": "Private, confidential, proprietary, or sensitive information is not accepted.",
+    "requires_human_intervention": true
+  },
+  "review": {
+    "verdict": "rejected",
+    "requires_human_intervention": true,
+    "confidence": "none",
+    "checks": {
+      "workflow_gates": false
+    },
+    "objections": [
+      "Private, confidential, proprietary, or sensitive information is not accepted."
+    ],
+    "limitations": [
+      "No new research conclusion is supported by this stopped run."
+    ]
+  },
+  "integrity": {
+    "audit_head": "4e1e06731de5097e6113a86a689f28ad40a55ca4796f56ec05976cb3912e948b",
+    "research_journal_head": "762126be0f642cb5b165093c85eeabc24547d4d75f8ee936a150de8a70da898c"
+  }
+}

@@ -7,27 +7,8 @@ import math
 import statistics
 
 from .data_engineer import DataEngineer
+from .experiment import SUPPORTED_SPECIFICATION, specification_issues
 from .models import ResearchError, content_hash
-
-
-SUPPORTED_SPECIFICATION = {
-    "version": "1.0",
-    "signal": "trailing_sample_std_monthly_returns",
-    "universe": [f"SYN{index:02d}" for index in range(1, 13)],
-    "lookback_months": 12,
-    "holding_months": 1,
-    "selection_count": 4,
-    "benchmark": "monthly_rebalanced_equal_weight_universe",
-    "cost_bps": 10.0,
-    "risk_free_rate": 0.0,
-    "as_of_date": "2024-12-31",
-    "min_observations": 36,
-    "success_rule": "strategy_net_sharpe > benchmark_net_sharpe",
-    "seed": 42,
-    "generator_version": "synthetic-monthly-v1",
-    "start_date": "2014-12-31",
-    "n_months": 121,
-}
 
 
 def summarize_returns(returns: list[float], turnovers: list[float],
@@ -85,9 +66,9 @@ class Backtester:
         if not verified:
             raise ResearchError("Hypothesis lock or content hash is invalid; human intervention required")
         spec = lock["specification"]
-        for field, expected in SUPPORTED_SPECIFICATION.items():
-            if spec.get(field) != expected:
-                raise ResearchError(f"Unsupported locked specification field: {field}")
+        issues = specification_issues(spec)
+        if issues:
+            raise ResearchError("; ".join(issues))
         actual_validation = DataEngineer().validate(rows, spec)
         if (not isinstance(validation, dict) or validation.get("passed") is not True
                 or actual_validation["passed"] is not True
@@ -174,10 +155,12 @@ class Backtester:
             "observations": observations,
             "methodology": {
                 "data_kind": "deterministic_synthetic",
-                "formation": "Trailing 12 sample-standard-deviation monthly returns, computed at formation close",
+                "formation": f"Trailing {lookback} sample-standard-deviation monthly returns, computed at formation close",
                 "execution": "Observe and transact at the same synthetic month-end close with zero latency",
                 "holding": "Next one-month simple price return; no dividends or corporate actions",
-                "selection": "Four lowest-volatility assets; alphabetical asset-ID tie break",
+                "selection": ("Four lowest-volatility assets; alphabetical asset-ID tie break"
+                              if spec["selection_count"] == 4 else
+                              "Three lowest-volatility assets; alphabetical asset-ID tie break"),
                 "weights": "Selected assets equal weighted; benchmark all 12 assets equal weighted monthly",
                 "costs": "10 bps times L1 traded weight; initial entry included; both portfolios charged",
                 "turnover": "Sum of absolute target minus prior post-return drifted weights; initial value 1",
