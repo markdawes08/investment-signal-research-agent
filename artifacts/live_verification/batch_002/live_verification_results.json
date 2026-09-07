@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "verification_kind": "real_provider_batch",
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "batch": "batch_002",
+  "hard_provider_attempt_limit": 16,
+  "provider_attempts": 2,
+  "actual_provider_calls": 2,
+  "checks": {
+    "A_genuine_research": false,
+    "B_persisted_duplicate": null,
+    "C_controlled_feedback": null,
+    "D_explicit_supported_choices": null
+  },
+  "runs": [
+    {
+      "name": "A_research",
+      "status": "malformed_output",
+      "verdict": "rejected",
+      "result_path": "batch_002/A_research/result.json",
+      "actual_provider_calls": 2,
+      "provider_execution": {
+        "calls_attempted": 2,
+        "actual_provider_calls": 2,
+        "calls": [
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_0b4b8548d6254c7c016a9f3ce382d487d1b1a718ab0ce010aa",
+            "usage": {
+              "input_tokens": 2493,
+              "output_tokens": 1424,
+              "total_tokens": 3917
+            },
+            "actual_provider_call": true,
+            "status": "completed",
+            "cost_usd": null
+          },
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_07941c891e54898e016a9f3cf3a27c87d18b112042101b8c58",
+            "usage": {
+              "input_tokens": 3555,
+              "output_tokens": 1536,
+              "total_tokens": 5091
+            },
+            "actual_provider_call": true,
+            "status": "completed",
+            "cost_usd": null
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 6048,
+          "output_tokens": 2960,
+          "total_tokens": 9008
+        },
+        "cost_usd": null,
+        "live_execution_verified": false
+      },
+      "requires_human_intervention": true
+    }
+  ],
+  "incomplete_checks": [
+    "A did not complete a genuine LLM research run; dependent B and remaining C/D were not attempted."
+  ],
+  "live_verified": false,
+  "status": "incomplete",
+  "required_environment_variable": null,
+  "controlled_condition": "C deliberately adds a pre-lock validation requirement to explicitly name same-close execution and zero latency in limitations. No data, seed, or outcome is changed.",
+  "elapsed_seconds": 34.149941
+}

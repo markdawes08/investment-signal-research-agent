@@ -1,0 +1,2 @@
+LLM-assisted research MVP | Deterministic synthetic data | Historical research only | Not investment advice | No trade execution | Not evidence of future performance | Not evidence about real markets
+Mocked agentic evaluation: 12/12 passed; real provider calls: 0

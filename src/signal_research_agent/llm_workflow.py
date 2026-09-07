@@ -270,8 +270,11 @@ def _planning_loop(coordinator, artifacts, provider, context, evidence, memory, 
         if response["status"] != "completed":
             return artifacts.stop(response["status"], "The provider did not return a completed structured design; no offline fallback was used.")
         proposal = response.get("output")
+        prior_candidate_ids = [item["candidate"]["id"] for previous in search["rounds"]
+                               for item in previous["candidates"]]
         assessment = validate_proposal(proposal, evidence, artifacts.result["topic"],
-                                       constraints=constraints, parent_ids=parent_ids)
+                                       constraints=constraints, parent_ids=parent_ids,
+                                       prior_candidate_ids=prior_candidate_ids if depth == 2 else None)
         candidates = deepcopy(assessment["candidates"])
         if (isinstance(proposal, dict) and proposal.get("action") == "defer" and not schema_issues(proposal)
                 and not proposal["candidates"] and proposal["selected_candidate_id"] is None and proposal["deferral_reason"]):
@@ -282,8 +285,23 @@ def _planning_loop(coordinator, artifacts, provider, context, evidence, memory, 
                 "depth": depth, "proposal": proposal, "candidates": candidates, "retained": []})
             return artifacts.stop("model_deferred", "The generator deferred after reviewing evidence and methodological constraints.")
         if not candidates or len(candidates) > (3 if depth == 1 else 2):
-            return artifacts.stop("malformed_output", "No inspectable candidate tree satisfied the strict structured-output contract.")
+            failure = {"depth": depth, "errors": assessment["errors"],
+                       "candidate_errors": [{"candidate_id": item["candidate"].get("id"),
+                                             "errors": item["errors"]}
+                                            for item in candidates if isinstance(item["candidate"], dict)]}
+            artifacts.result.setdefault("validation_failures", []).append(failure)
+            artifacts.event("Coordinator", "candidate_output_rejected", failure)
+            limit = 3 if depth == 1 else 2
+            return artifacts.stop("malformed_output", f"Round {depth} returned {len(candidates)} inspectable candidates; "
+                                  f"this round requires between one and {limit}, or an explicit deferral. "
+                                  "See validation_failures for the action, parent, and candidate objections.")
         if any(schema_issues(item["candidate"], CANDIDATE_SCHEMA) for item in candidates):
+            failure = {"depth": depth, "errors": assessment["errors"],
+                       "candidate_errors": [{"candidate_id": item["candidate"].get("id"),
+                                             "errors": schema_issues(item["candidate"], CANDIDATE_SCHEMA)}
+                                            for item in candidates if isinstance(item["candidate"], dict)]}
+            artifacts.result.setdefault("validation_failures", []).append(failure)
+            artifacts.event("Coordinator", "candidate_output_rejected", failure)
             return artifacts.stop("malformed_output", "Candidate fields failed the strict schema before any executable design was accepted.")
         for item in candidates:
             if item["valid"]:
@@ -348,6 +366,8 @@ def _planning_loop(coordinator, artifacts, provider, context, evidence, memory, 
         if not objections:
             objections.append("A selected valid executable candidate is required; otherwise defer.")
         feedback = {"round": 2, "objections": objections, "parent_ids": retained,
+                    "prior_candidate_ids": [item["candidate"]["id"] for previous in search["rounds"]
+                                            for item in previous["candidates"]],
                     "candidates": [item["candidate"] for item in ranked[:2]]}
         search["feedback"].append(feedback)
         artifacts.event("Coordinator", "feedback_issued", feedback)

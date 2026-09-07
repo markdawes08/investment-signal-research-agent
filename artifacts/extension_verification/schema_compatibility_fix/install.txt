@@ -1,0 +1,39 @@
+Processing <workspace>
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: openai<3,>=2.0 in <workspace>\.venv\lib\site-packages (from investment-signal-research-agent==2.0.0) (2.54.0)
+Requirement already satisfied: anyio<5,>=3.5.0 in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (4.15.1)
+Requirement already satisfied: distro<2,>=1.7.0 in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (1.9.0)
+Requirement already satisfied: httpx<1,>=0.23.0 in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (0.28.1)
+Requirement already satisfied: jiter<1,>=0.10.0 in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (0.16.0)
+Requirement already satisfied: pydantic<3,>=1.9.0 in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (2.13.5)
+Requirement already satisfied: sniffio in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (1.3.1)
+Requirement already satisfied: tqdm>4 in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (4.70.0)
+Requirement already satisfied: typing-extensions<5,>=4.14 in <workspace>\.venv\lib\site-packages (from openai<3,>=2.0->investment-signal-research-agent==2.0.0) (4.16.0)
+Requirement already satisfied: idna>=2.8 in <workspace>\.venv\lib\site-packages (from anyio<5,>=3.5.0->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (3.19)
+Requirement already satisfied: certifi in <workspace>\.venv\lib\site-packages (from httpx<1,>=0.23.0->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (2026.7.22)
+Requirement already satisfied: httpcore==1.* in <workspace>\.venv\lib\site-packages (from httpx<1,>=0.23.0->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (1.0.9)
+Requirement already satisfied: h11>=0.16 in <workspace>\.venv\lib\site-packages (from httpcore==1.*->httpx<1,>=0.23.0->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (0.16.0)
+Requirement already satisfied: annotated-types>=0.6.0 in <workspace>\.venv\lib\site-packages (from pydantic<3,>=1.9.0->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (0.8.0)
+Requirement already satisfied: pydantic-core==2.46.5 in <workspace>\.venv\lib\site-packages (from pydantic<3,>=1.9.0->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (2.46.5)
+Requirement already satisfied: typing-inspection>=0.4.2 in <workspace>\.venv\lib\site-packages (from pydantic<3,>=1.9.0->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (0.4.4)
+Requirement already satisfied: colorama in <workspace>\.venv\lib\site-packages (from tqdm>4->openai<3,>=2.0->investment-signal-research-agent==2.0.0) (0.4.6)
+Building wheels for collected packages: investment-signal-research-agent
+  Building wheel for investment-signal-research-agent (pyproject.toml): started
+  Building wheel for investment-signal-research-agent (pyproject.toml): finished with status 'done'
+  Created wheel for investment-signal-research-agent: filename=investment_signal_research_agent-2.0.0-py3-none-any.whl size=81768 sha256=998406c3480c6ce4fc750783c453210ffd323436bd61a9d7982a18f215c92caa
+  Stored in directory: <user>\appdata\local\pip\cache\wheels\e6\ce\56\74ad8fca7ea2ea1f9f0285b921567b6b3b218e1e742b275972
+Successfully built investment-signal-research-agent
+Installing collected packages: investment-signal-research-agent
+  Attempting uninstall: investment-signal-research-agent
+    Found existing installation: investment-signal-research-agent 2.0.0
+    Uninstalling investment-signal-research-agent-2.0.0:
+      Successfully uninstalled investment-signal-research-agent-2.0.0
+Successfully installed investment-signal-research-agent-2.0.0
+
+[notice] A new release of pip is available: 25.1.1 -> 26.2.1
+[notice] To update, run: <workspace>\.venv\Scripts\python.exe -m pip install --upgrade pip

@@ -142,6 +142,32 @@ class LLMWorkflowTests(unittest.TestCase):
         self.assertEqual(len(provider.contexts), 2)
         self.assert_stopped_before_data(result)
 
+    def test_revised_candidate_cannot_reuse_a_pruned_initial_id(self):
+        initial = proposal_fixture(6, 3)
+        initial["candidates"][0]["id"] = "c1"
+        initial["selected_candidate_id"] = "c1"
+        for identifier, parameters in (("c2", (12, 3)), ("c3", (6, 4))):
+            candidate = deepcopy(proposal_fixture(*parameters)["candidates"][0])
+            candidate["id"] = identifier
+            initial["candidates"].append(candidate)
+
+        def reuse_pruned_id(context):
+            output = revision(context, same_close=True)
+            output["candidates"][0]["id"] = "c3"
+            output["selected_candidate_id"] = "c3"
+            return output
+
+        provider = ScriptedProvider(initial, reuse_pruned_id)
+        result = self.execute(provider, controlled_validation="require_same_close_limitation",
+                              constraints={"lookback_months": 6, "selection_count": 3})
+        self.assertEqual(provider.contexts[1]["validation_feedback"]["parent_ids"], ["c1", "c2"])
+        self.assertEqual(provider.contexts[1]["validation_feedback"]["prior_candidate_ids"], ["c1", "c2", "c3"])
+        self.assertEqual(result["status"], "revision_budget_exhausted")
+        self.assert_stopped_before_data(result)
+        revised = result["hypothesis_search"]["rounds"][1]["candidates"][0]
+        self.assertFalse(revised["valid"])
+        self.assertTrue(any("reuses an earlier candidate" in error and "pruned" in error for error in revised["errors"]))
+
     def test_budget_zero_and_one_are_enforced(self):
         zero = ScriptedProvider()
         result = self.execute(zero, max_provider_calls=0)

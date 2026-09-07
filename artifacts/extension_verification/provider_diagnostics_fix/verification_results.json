@@ -1,0 +1,94 @@
+{
+  "verification_kind": "offline_provider_diagnostics_regression",
+  "actual_provider_calls": 0,
+  "safety_notices": [
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "install": {
+    "exit_code": 0,
+    "elapsed_seconds": 6.043843
+  },
+  "tests": {
+    "exit_code": 0,
+    "elapsed_seconds": 42.915179,
+    "tests_run": 232,
+    "runner_elapsed_seconds": 42.708
+  },
+  "offline_evaluation": {
+    "exit_code": 0,
+    "elapsed_seconds": 1.444295,
+    "total": 31,
+    "passed": 31,
+    "failed": 0
+  },
+  "agentic_evaluation": {
+    "exit_code": 0,
+    "elapsed_seconds": 1.690276,
+    "total": 12,
+    "passed": 12,
+    "failed": 0
+  },
+  "v1_replay": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.326193
+  },
+  "pip_check": {
+    "exit_code": 0,
+    "elapsed_seconds": 0.364605
+  },
+  "source_code_sha256": {
+    "pyproject.toml": "68da79ee47ab880f127f8f8ae2f9e8fbd7485de7b97aee4b98c153185238ad2f",
+    "src/signal_research_agent/agentic_evaluation.py": "0b7aaff65abfe2d25664a3609cb4e4d07d0e6456a7e71156916555fdb1642e3b",
+    "src/signal_research_agent/backtester.py": "acc8df4b253ae09e25545f9b9f3d1263c6256f7488ce3083794ee47b91ac294b",
+    "src/signal_research_agent/cli.py": "344e80d082951f9398010c0008d53968bae1fbee2317e695f4c6b56ed5c85bbd",
+    "src/signal_research_agent/coordinator.py": "4b1df2347f66db8babca948990976bd9568819daddb3329ee0d503548efc6736",
+    "src/signal_research_agent/data_engineer.py": "c226eb9a9059779d2e0171a3eb89970d7cb8d948a4347c9078892c78e7f1d3a3",
+    "src/signal_research_agent/evaluation.py": "7e512276eca443abf068965bc55016c659b4a10ab56a13b179fbb7a9b0db8e6f",
+    "src/signal_research_agent/experiment.py": "2ca4e6077bca8e844903fa5468c155a21718ad8f39ead3c2f7952daddef09e7f",
+    "src/signal_research_agent/hypothesis.py": "9e7db0a1f2dc1a8e0fc9468ba04459f16737e50dde35164d1b8d61acb2ef7993",
+    "src/signal_research_agent/journal.py": "84ff7a5d75838710e23c513b587beddc688910b1063b29cd028734ef4f39f24c",
+    "src/signal_research_agent/llm_design.py": "9b3854041164bb0d66936b2e21ce6b009981d3c5d76f0fdef5cc480fbdf941a8",
+    "src/signal_research_agent/llm_workflow.py": "260f7b40476cb8e02db413ef0ba0d2eab1b9d7e243b920e4eb226d46be3ce7fa",
+    "src/signal_research_agent/memory.py": "38b3fa95e20a63b2792f0ca2227190db1cf4dde997ac5c4980294eb9534f3660",
+    "src/signal_research_agent/models.py": "3fe7fe08ecaabbf45d13fd43645387eaa43e6cca7e50fe1bdf4952353af2ef79",
+    "src/signal_research_agent/provider.py": "4464f3263e96b5741706549b63d022233c30acd0e95d8639402b2883a0ecf240",
+    "src/signal_research_agent/retrieval.py": "8a040a501429293048ad59e9d3046135fe6f7fd5b09b6dd6e007bfe868f1aff1",
+    "src/signal_research_agent/safety.py": "1ac1930dfdcf4a70aa8ee78796d4979e664705e85a4eec9d13f818318b2f6d09",
+    "src/signal_research_agent/skeptic.py": "9c8c8c06454b368b06bca08559ed4b3e0b809ca6b355ca8f1e999aab675aac7b",
+    "src/signal_research_agent/__init__.py": "a7817721210cd5138127f0a376452a621dfaa4ae18453457538b6026f0ebf930",
+    "src/signal_research_agent/__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "src/signal_research_agent/data/literature.json": "762e15df023a4ee30803ae5d04afee08823326fa09769001e442ec85c11fe8bf",
+    "tests/test_coordinator.py": "4df2deae01af4804d3960c3d027b111806cb4dcec6c3817bef01a3cadd5dd88b",
+    "tests/test_data_backtester.py": "3d0f490934f6d131ef06154144d04024e9562f1db01f836aeaa483c7cee62eee",
+    "tests/test_evaluation_cli.py": "440e2c6520b9327a54707e8979dbc7e1e464364e21ceeb655a34d1d29c4203d6",
+    "tests/test_live_diagnostics.py": "8230ce455f2e4147eb3c084c706b332799fce570d7a5e09aca71dd7892385097",
+    "tests/test_llm_design.py": "bb7bf979d202bcf058fb43aec22467dc90a42164f8f4a8dc3e539ccc85278e2a",
+    "tests/test_llm_workflow.py": "5e4ffaab33ca8f8ee99a8459ded139b3c313416b68eb675b2579b0cbef3f920c",
+    "tests/test_memory.py": "3a9bb333beaf2860bbd2dec4d00a9b3655ec92b3a05ddc93c476b0ddab161b36",
+    "tests/test_mode_contracts.py": "208186b4a2f1f9a94a9a82aa97bec79ce931e74dc1463c198808417514e74f16",
+    "tests/test_retrieval_hypothesis.py": "d6ce338e350e6de6cfea22a27f72cbbd1c9afb1f78d0c1a1620250a5eef43ed5",
+    "tests/test_safety_skeptic_journal.py": "5e54b8d8fc986d64beb9ac9f4c72eb1ab8165006b91cf34dd5306b719f93e9cd",
+    "scripts/run_evaluation.py": "c6f4f18fa25b65095b414f468e34b2bda90062fb52a53ba7e3d5e7dd771d8bef",
+    "scripts/run_live_verification.py": "0b1b2aade83ce283bce7667e5fd1bbe1a5f5d789de33dc758e6d409f161d5c10"
+  },
+  "preserved_live_failure": "../../live_verification/batch_003/A_research/result.json",
+  "publication_scan": {
+    "files_read": 309,
+    "python_files": 31,
+    "json_files": 75,
+    "verified_journal_chains": 124,
+    "verified_result_bindings": 50,
+    "local_markdown_links": 45,
+    "total_bytes": 23484348,
+    "largest_file_bytes": 438047,
+    "issues": [],
+    "flags_for_review": [],
+    "git_diff_check": "Not run: owner reserved all Git commands. Full-file whitespace/conflict scan performed instead.",
+    "scope": "Source, tests, scripts, docs, package metadata and intended evidence artifacts; ignored caches, environments and local runs excluded."
+  }
+}

@@ -1,0 +1,236 @@
+{
+  "schema_version": "1.0",
+  "safety_notices": [
+    "Offline MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance"
+  ],
+  "purpose": "Software acceptance checks; not investment efficacy or real-market validation.",
+  "python_version": "3.13.5",
+  "total": 31,
+  "passed": 31,
+  "failed": 0,
+  "cases": [
+    {
+      "name": "end_to_end_completion",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 1e-06
+    },
+    {
+      "name": "all_five_roles",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 4e-06
+    },
+    {
+      "name": "retrieval_grounding",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.000512
+    },
+    {
+      "name": "bounded_pre_outcome_search",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 2e-06
+    },
+    {
+      "name": "valid_baseline_data",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 6.1e-05
+    },
+    {
+      "name": "deterministic_replay",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.774878
+    },
+    {
+      "name": "brokerage_action_refusal",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 2.5e-05
+    },
+    {
+      "name": "trade_execution_refusal",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 1.5e-05
+    },
+    {
+      "name": "personalized_advice_refusal",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 4.6e-05
+    },
+    {
+      "name": "private_data_refusal",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 2.3e-05
+    },
+    {
+      "name": "empty_request_refusal",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 2e-06
+    },
+    {
+      "name": "ambiguous_request_refusal",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 2.7e-05
+    },
+    {
+      "name": "duplicate_row_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.010631
+    },
+    {
+      "name": "missing_value_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.009884
+    },
+    {
+      "name": "nonpositive_price_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.010194
+    },
+    {
+      "name": "nonfinite_price_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.008649
+    },
+    {
+      "name": "minimum_history_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.005134
+    },
+    {
+      "name": "unequal_history_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.010096
+    },
+    {
+      "name": "as_of_date_leakage_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.009992
+    },
+    {
+      "name": "availability_leakage_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.00991
+    },
+    {
+      "name": "synthetic_label_enforcement",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.009903
+    },
+    {
+      "name": "hypothesis_tampering_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.0001
+    },
+    {
+      "name": "audit_chain_integrity",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.002926
+    },
+    {
+      "name": "audit_edit_detection",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.002824
+    },
+    {
+      "name": "failed_validation_stops_backtester",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.183055
+    },
+    {
+      "name": "insufficient_grounding_escalates",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.000513
+    },
+    {
+      "name": "conflicting_grounding_escalates",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.00048
+    },
+    {
+      "name": "future_prices_do_not_change_earlier_signals",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.063802
+    },
+    {
+      "name": "costs_charged_to_both_portfolios",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 2e-06
+    },
+    {
+      "name": "sufficient_observation_count",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 1e-06
+    },
+    {
+      "name": "all_artifacts_and_notices",
+      "passed": true,
+      "detail": "Expected invariant observed.",
+      "elapsed_seconds": 0.001106
+    }
+  ],
+  "elapsed_seconds": 1.332741,
+  "sample": {
+    "verdict": "supported_in_synthetic_fixture_only",
+    "hypothesis_id": "hyp-v1-c4c216edea2a7ba3",
+    "data_hash": "7e7107a3f87b86354abdf6ed21bf1bd81b0368a6f1515049f45125471b524361",
+    "metrics": {
+      "strategy": {
+        "cumulative_return": 0.5246570811437103,
+        "annualized_return": 0.04797871962820621,
+        "annualized_volatility": 0.04881393292788858,
+        "sharpe_ratio": 0.9860084276803671,
+        "maximum_drawdown": -0.08293595011826405,
+        "average_monthly_turnover": 0.1302120050036301,
+        "total_turnover": 14.06289654039205,
+        "total_cost_fraction": 0.014062896540392049,
+        "observation_count": 108
+      },
+      "benchmark": {
+        "cumulative_return": 0.6719800344380653,
+        "annualized_return": 0.05877445394982006,
+        "annualized_volatility": 0.06956174526728,
+        "sharpe_ratio": 0.8572690962439602,
+        "maximum_drawdown": -0.09427481794521064,
+        "average_monthly_turnover": 0.033160883262065996,
+        "total_turnover": 3.5813753923031273,
+        "total_cost_fraction": 0.0035813753923031274,
+        "observation_count": 108
+      },
+      "sharpe_difference": 0.12873933143640692,
+      "observation_count": 108
+    }
+  }
+}

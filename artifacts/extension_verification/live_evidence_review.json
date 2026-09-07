@@ -1,0 +1,223 @@
+{
+  "verification_kind": "read_only_review_of_owner_executed_real_provider_evidence",
+  "status": "passed",
+  "additional_provider_calls_for_this_review": 0,
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "summary_path": "artifacts/live_verification/batch_007/live_verification_results.json",
+  "summary_content_hash": "36386ca8f6b932db19b99e9368be16d37975989ca41c64d7b5264c8278ee6d15",
+  "checks": {
+    "A_genuine_research": true,
+    "B_persisted_duplicate": true,
+    "C_controlled_feedback": true,
+    "D_explicit_supported_choices": true
+  },
+  "verified_original_and_resumed_results": 5,
+  "journal_heads_result_digests_and_audited_provider_metadata": "passed",
+  "reused_A_B_D_evidence_unchanged": true,
+  "preserved_failed_C_included_in_budget": true,
+  "previous_actual_calls": 5,
+  "new_actual_calls": 2,
+  "aggregate_actual_calls": 7,
+  "aggregate_adapter_attempts": 7,
+  "hard_batch_limit": 16,
+  "aggregate_token_usage": {
+    "input_tokens": 20997,
+    "output_tokens": 8461,
+    "total_tokens": 29458
+  },
+  "cost_usd": null,
+  "resume_elapsed_seconds": 26.677326,
+  "actual_models": [
+    "gpt-4.1-mini-2025-04-14"
+  ],
+  "response_ids": [
+    "resp_0a6bc80fa4391e8a016a9f4411a1f487d19d42622b1055c498",
+    "resp_06df5772ded41ad8016a9f4423818c87d1a2c801f19cc2a275",
+    "resp_04d7ee2fa17dd4bc016a9f4439ef9c87d1958dbe1b2506f241",
+    "resp_0cd5eb7e7785c1c4016a9f44486b8487d18a973c511c1a9b76",
+    "resp_070a43e066d3617b016a9f444f871487d1a5df9057836abbe1",
+    "resp_038ae3c5ce381e8d016a9f4a33d90c87d184e98ddd9527635b",
+    "resp_0fded6d954c86045016a9f4a41405087d1bccaa13a0005fc91"
+  ],
+  "feedback": {
+    "initial_ids": [
+      "r1a",
+      "r1b",
+      "r1c"
+    ],
+    "retained_parents": [
+      "r1a",
+      "r1c"
+    ],
+    "feedback": [
+      {
+        "round": 2,
+        "objections": [
+          "r1a: Controlled validation condition: limitations must explicitly mention same-close execution and zero latency.",
+          "r1b: Candidate violates the explicit lookback_months constraint.",
+          "r1b: Every executable candidate needs a supported methodological-caution claim.",
+          "r1b: Evidence claim 3 (arnott-2019-protocol): the claim lacks minimal lexical support in its cited excerpt; cite an excerpt supporting the stated claim or remove the unsupported claim.",
+          "r1b: Controlled validation condition: limitations must explicitly mention same-close execution and zero latency.",
+          "r1c: Candidate violates the explicit selection_count constraint.",
+          "r1c: Controlled validation condition: limitations must explicitly mention same-close execution and zero latency."
+        ],
+        "parent_ids": [
+          "r1a",
+          "r1c"
+        ],
+        "prior_candidate_ids": [
+          "r1a",
+          "r1b",
+          "r1c"
+        ],
+        "candidates": [
+          {
+            "id": "r1a",
+            "parent_id": null,
+            "research_claim": "Test whether a 6-month lookback total volatility signal, selecting 3 stocks with the lowest trailing monthly return volatility, generates higher risk-adjusted returns than the benchmark.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 3,
+            "evidence_claims": [
+              {
+                "claim": "High-volatility and high-beta stocks have comparatively weak historical returns, motivating comparison of total volatility and beta definitions.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Portfolios can be formed monthly on variance using lagged daily returns with a methodology focused on variance ranking.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns."
+              },
+              {
+                "claim": "Disciplined empirical research requires a falsifiable hypothesis and restrictions on model adaptation to avoid false discoveries and overfitting.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples."
+              }
+            ],
+            "assumptions": [
+              "Total volatility defined as trailing sample standard deviation of monthly returns.",
+              "Synthetic monthly returns with a 6-month lookback are feasible in execution.",
+              "Equal weighting among selected stocks is used in portfolio formation."
+            ],
+            "decision_rationale": "This candidate aligns with the explicit constraints of a 6-month lookback and selection count of 3, using total volatility which is the only executable signal supported. Evidence supports the relevance of total volatility in the research direction, and the methodology references ensure a viable and transparent portfolio construction approach.",
+            "limitations": [
+              "Does not account for factor exposures such as beta or idiosyncratic volatility due to lack of real factor data.",
+              "Synthetic data may not capture all nuances of real market behavior.",
+              "Limited to 6-month lookback; longer horizons not tested here."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          },
+          {
+            "id": "r1c",
+            "parent_id": null,
+            "research_claim": "Test whether a 6-month lookback total volatility signal, selecting 4 stocks with the lowest trailing monthly return volatility, generates higher risk-adjusted returns than the benchmark.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 4,
+            "evidence_claims": [
+              {
+                "claim": "Investigation of total-volatility portfolios with different sizes can reveal robustness of low-volatility strategies.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "This motivates comparing total-volatility and beta definitions, while leaving open whether any particular implementation will reproduce the reported pattern."
+              },
+              {
+                "claim": "Formation of portfolios on variance is standard practice using lagged returns and monthly updates.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns."
+              },
+              {
+                "claim": "A strict backtesting protocol reduces false discoveries and selection biases in empirical financial research.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples."
+              }
+            ],
+            "assumptions": [
+              "Four-stock portfolios provide meaningful diversification under synthetic data constraints.",
+              "6-month trailing monthly return volatility remains a valid signal for risk-adjusted return potential.",
+              "Transaction costs and equal weighting are consistently applied."
+            ],
+            "decision_rationale": "Varying the selection count to 4 while keeping a 6-month lookback tests sensitivity to the number of stocks selected, enriching empirical evaluation and robustness analysis.",
+            "limitations": [
+              "Increasing selection count dilutes signal concentration and may impact distinct risk exposures.",
+              "Same synthetic data limitations and absence of factor controls apply.",
+              "Shorter lookback and higher selection count combined effect uncertain a priori."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          }
+        ]
+      }
+    ],
+    "revised_ids": [
+      "r2a",
+      "r2b"
+    ],
+    "selected_id": "r2a",
+    "hypothesis_id": "hyp-v1-22fb628b816eadfc",
+    "hypothesis_content_hash": "22fb628b816eadfcf013a8be69030224486964d46cd85e8c1fab949e0c387cf8",
+    "skeptic_checks_passed": 19,
+    "audit_event_sequence": [
+      "request_accepted",
+      "evidence_retrieved",
+      "memory_retrieved",
+      "provider_call_completed",
+      "candidates_assessed",
+      "feedback_issued",
+      "provider_call_completed",
+      "candidates_assessed",
+      "search_completed",
+      "hypothesis_locked",
+      "data_generated",
+      "data_validated",
+      "backtest_started",
+      "backtest_completed",
+      "review_completed",
+      "workflow_completed"
+    ]
+  },
+  "memory_duplicate_reference": {
+    "journal_record_id": "0360108cdd5a3e0bc6ef88ff8fba214d5bcdbdf0e856158c74b742d19e2db7a0",
+    "experiment_fingerprint": "eb3b0f678ad669d0b2dbd36037b682e8f6319ff965216d040a9cf0e0d2270ff5",
+    "hypothesis_id": "hyp-v1-72e2697bc0f0e49a",
+    "run_id": "run-efeb9edb87fdd011"
+  },
+  "baseline_regression": {
+    "tests": {
+      "exit_code": 0,
+      "elapsed_seconds": 48.866719,
+      "tests_run": 259,
+      "runner_elapsed_seconds": 48.678
+    },
+    "offline_evaluation": {
+      "exit_code": 0,
+      "elapsed_seconds": 1.465844,
+      "total": 31,
+      "passed": 31,
+      "failed": 0
+    },
+    "agentic_evaluation": {
+      "exit_code": 0,
+      "elapsed_seconds": 1.678435,
+      "total": 12,
+      "passed": 12,
+      "failed": 0
+    }
+  },
+  "source_hashes_unchanged_since_regression": true,
+  "limits": [
+    "Local chains are integrity checks, not signed external attestations.",
+    "Real provider execution is evidenced by application-recorded SDK metadata, not model declarations.",
+    "Reused A/B/D retain their original prompt/schema versions; only C ran under the updated contract.",
+    "Completed live checks do not guarantee success of every future model proposal."
+  ]
+}

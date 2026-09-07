@@ -1,0 +1,10 @@
+Deterministic saved-specification replay | Deterministic synthetic data | Historical research only | Not investment advice | No trade execution | Not evidence of future performance | Not evidence about real markets
+Status: completed
+Verdict: supported_in_synthetic_fixture_only
+Human intervention required: False
+Actual provider calls: 0
+Provider status: completed
+Synthetic observations: 114
+Synthetic strategy: annualized return=5.2313%, volatility=4.7917%, Sharpe=1.090121
+Synthetic benchmark: annualized return=6.5876%, volatility=7.0057%, Sharpe=0.947628
+Artifacts: <workspace>\artifacts\extension_verification\provider_diagnostics_fix\v1_replay

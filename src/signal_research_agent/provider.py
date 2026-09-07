@@ -12,11 +12,29 @@ import math
 import os
 import re
 
-from .llm_design import (MAX_CONTEXT_CHARS, MAX_OUTPUT_CHARS, PROPOSAL_SCHEMA,
-                         SCHEMA_VERSION, SYSTEM_INSTRUCTIONS)
-from .models import canonical_json
+from .llm_design import (MAX_CONTEXT_CHARS, MAX_OUTPUT_CHARS,
+                         SCHEMA_VERSION, SYSTEM_INSTRUCTIONS, proposal_schema_for_context)
+from .models import canonical_json, content_hash
 
 DEFAULT_MODEL = "gpt-4.1-mini-2025-04-14"
+
+# Explicit diagnostic allowlists mirror the installed official SDK's
+# responses.response_status, response.IncompleteDetails and ResponseError types.
+# Unknown future values stay unknown; arbitrary provider text is never retained.
+_RESPONSE_STATUSES = frozenset({"completed", "failed", "in_progress", "cancelled", "queued", "incomplete"})
+_INCOMPLETE_REASONS = frozenset({"max_output_tokens", "content_filter"})
+_RESPONSE_ERROR_CODES = frozenset({
+    "server_error", "rate_limit_exceeded", "invalid_prompt", "data_residency_mismatch",
+    "bio_policy", "vector_store_timeout", "invalid_image", "invalid_image_format",
+    "invalid_base64_image", "invalid_image_url", "image_too_large", "image_too_small",
+    "image_parse_error", "image_content_policy_violation", "invalid_image_mode",
+    "image_file_too_large", "unsupported_image_media_type", "empty_image_file",
+    "failed_to_download_image", "image_file_not_found",
+})
+
+
+def _allowlisted(value, allowed):
+    return value if isinstance(value, str) and value in allowed else None
 
 
 def _safe_identifier(value):
@@ -66,7 +84,11 @@ class OpenAIProvider:
     def generate(self, context: dict) -> dict:
         metadata = {"provider": "openai", "requested_model": self.model,
                     "actual_model": None, "response_id": None, "usage": None,
-                    "actual_provider_call": False, "status": None, "cost_usd": None}
+                    "actual_provider_call": False, "status": None, "cost_usd": None,
+                    "provider_response_status": None, "incomplete_reason": None,
+                    "provider_error_code": None,
+                    "requested_max_output_tokens": self.max_output_tokens,
+                    "response_schema_hash": None}
 
         def result(status, output=None):
             metadata["status"] = status
@@ -78,6 +100,11 @@ class OpenAIProvider:
             return result("invalid_context")
         if not isinstance(context, dict) or len(serialized) > MAX_CONTEXT_CHARS:
             return result("context_limit_exceeded")
+        try:
+            response_schema = proposal_schema_for_context(context)
+            metadata["response_schema_hash"] = content_hash(response_schema)
+        except (ValueError, TypeError, KeyError):
+            return result("invalid_context")
         key = os.environ.get("OPENAI_API_KEY", "").strip()
         if not key:
             return result("missing_credentials")
@@ -94,14 +121,24 @@ class OpenAIProvider:
                 model=self.model, instructions=SYSTEM_INSTRUCTIONS,
                 input=[{"role": "user", "content": serialized}],
                 text={"format": {"type": "json_schema", "name": SCHEMA_VERSION.replace("-", "_"),
-                                 "strict": True, "schema": PROPOSAL_SCHEMA}},
+                                 "strict": True, "schema": response_schema}},
                 max_output_tokens=self.max_output_tokens, store=False,
             )
             metadata["actual_model"] = _safe_identifier(getattr(response, "model", None))
             metadata["response_id"] = _safe_identifier(getattr(response, "id", None))
             metadata["usage"] = _usage(getattr(response, "usage", None))
-            if getattr(response, "status", None) != "completed":
+            response_status = _allowlisted(getattr(response, "status", None), _RESPONSE_STATUSES)
+            metadata["provider_response_status"] = response_status
+            metadata["incomplete_reason"] = _allowlisted(
+                getattr(getattr(response, "incomplete_details", None), "reason", None), _INCOMPLETE_REASONS)
+            metadata["provider_error_code"] = _allowlisted(
+                getattr(getattr(response, "error", None), "code", None), _RESPONSE_ERROR_CODES)
+            if response_status == "failed":
+                return result("provider_failed")
+            if response_status == "incomplete":
                 return result("provider_incomplete")
+            if response_status != "completed":
+                return result("provider_unexpected_status")
             output_text = getattr(response, "output_text", None)
             if not isinstance(output_text, str) or not output_text.strip():
                 return result("malformed_output")
@@ -117,6 +154,7 @@ class OpenAIProvider:
         except Exception as error:
             # Never retain the exception text, request, authentication headers,
             # credential, refusal payload, or provider's raw response body.
+            metadata["provider_error_code"] = _allowlisted(getattr(error, "code", None), _RESPONSE_ERROR_CODES)
             timeout_class = getattr(sdk, "APITimeoutError", ())
             if isinstance(error, TimeoutError) or (isinstance(timeout_class, type) and isinstance(error, timeout_class)):
                 return result("provider_timeout")

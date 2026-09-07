@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "test_kind": "mocked_provider_acceptance",
+  "real_provider_calls": 0,
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "batch": "batch_001",
+  "total": 12,
+  "passed": 12,
+  "failed": 0,
+  "cases": [
+    {
+      "name": "accepted_6_months_3_assets",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.204292
+    },
+    {
+      "name": "accepted_6_months_4_assets",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.187266
+    },
+    {
+      "name": "accepted_12_months_3_assets",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.202431
+    },
+    {
+      "name": "accepted_12_months_4_assets",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.198488
+    },
+    {
+      "name": "actual_validation_feedback_changes_proposal",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.203198
+    },
+    {
+      "name": "persisted_memory_prevents_duplicate",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.210208
+    },
+    {
+      "name": "new_process_detects_same_experiment",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.095886
+    },
+    {
+      "name": "necessary_grounding_removal_blocks_provider_and_backtest",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.008504
+    },
+    {
+      "name": "current_and_prior_performance_excluded",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 5.8e-05
+    },
+    {
+      "name": "saved_specification_replays_without_provider",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.204983
+    },
+    {
+      "name": "sensitive_request_has_zero_provider_calls",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 0.00756
+    },
+    {
+      "name": "mock_results_never_claim_live_execution",
+      "passed": true,
+      "detail": "Expected behavior observed.",
+      "elapsed_seconds": 6e-06
+    }
+  ],
+  "elapsed_seconds": 1.522944
+}

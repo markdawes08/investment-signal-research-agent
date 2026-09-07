@@ -14,8 +14,8 @@ from .hypothesis import grounding_issues
 from .models import canonical_json
 from .safety import check_request
 
-PROMPT_VERSION = "research-design-v1"
-SCHEMA_VERSION = "research-proposal-v1"
+PROMPT_VERSION = "research-design-v3"
+SCHEMA_VERSION = "research-proposal-v4"
 MAX_CONTEXT_CHARS = 24000
 MAX_OUTPUT_CHARS = 16000
 
@@ -76,7 +76,8 @@ Choose a specification for methodological fit, grounding and feasibility, not to
 seek favorable outcomes or to evade duplicate detection. Honor explicit constraints.
 If the topic specifically requests beta or idiosyncratic volatility, defer or clearly
 explain the change to total volatility in adaptation_rationale; never relabel it.
-Write research_claim as a hypothesis to test, not an established market conclusion.
+Begin every research_claim with the exact words "Test whether " and describe the
+proposed comparison as a hypothesis, not an established market conclusion.
 An executable research_claim must describe total volatility. If you adapt a beta
 or idiosyncratic-volatility request, identify that requested signal, the distinct
 total-volatility alternative, and the unavailable methodology in adaptation_rationale.
@@ -91,11 +92,79 @@ Use action propose initially; after concrete validation feedback, use revise wit
 at most two children whose parent_id names a retained parent in that feedback, or
 defer with no candidates. You get at most one revision round, maximum depth two,
 beam width two, and four provider calls including transport retries.
+Follow the application-owned round_contract and response schema for the current
+round. In round two, do not restart with action propose, initial null parents, or
+three candidates. Use distinct IDs only from round_contract.available_candidate_ids:
+r1a/r1b/r1c initially and r2a/r2b for revisions. These IDs are application-owned
+bookkeeping labels, not proposed scientific parameters. Child IDs must differ
+from every prior_candidate_id, including pruned candidates. Select only an ID
+actually used by one of this round's candidates, or null when deferring.
 A duplicate should be explicitly deferred unless the user supplied a replication
 rationale; do not automatically vary choices just to escape a duplicate check.
 Select one candidate by ID. Deferral requires selected_candidate_id null and an
 explanation. Follow the JSON schema exactly; do not add metadata, metrics or code.
 """
+
+
+def _round_contract(feedback):
+    """Derive protocol state from Coordinator feedback, never from model output."""
+    if feedback is None:
+        return {"round": 1, "allowed_actions": ["propose", "defer"], "max_candidates": 3,
+                "parent_id_rule": "must_be_null", "retained_parent_ids": [],
+                "available_candidate_ids": ["r1a", "r1b", "r1c"], "prior_candidate_ids": [],
+                "candidate_ids_must_be_new": True, "research_claim_prefix": "Test whether "}
+    if not isinstance(feedback, dict) or type(feedback.get("round")) is not int or feedback["round"] != 2:
+        raise ValueError("Revision feedback must identify the second and final research-design round.")
+    parents = feedback.get("parent_ids")
+    if (not isinstance(parents, list) or not 1 <= len(parents) <= 2
+            or any(not isinstance(identifier, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,39}", identifier)
+                   for identifier in parents)
+            or len(set(parents)) != len(parents)):
+        raise ValueError("Revision feedback must contain one or two distinct retained parent identifiers.")
+    prior_ids = feedback.get("prior_candidate_ids", parents)
+    if (not isinstance(prior_ids, list) or not 1 <= len(prior_ids) <= 3
+            or any(not isinstance(identifier, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,39}", identifier)
+                   for identifier in prior_ids)
+            or len(set(prior_ids)) != len(prior_ids) or not set(parents).issubset(prior_ids)
+            or set(prior_ids).intersection({"r2a", "r2b"})):
+        raise ValueError("Revision feedback must preserve distinct prior candidate IDs and permit fresh revision IDs.")
+    return {"round": 2, "allowed_actions": ["revise", "defer"], "max_candidates": 2,
+            "parent_id_rule": "must_reference_retained_parent", "retained_parent_ids": list(parents),
+            "available_candidate_ids": ["r2a", "r2b"], "prior_candidate_ids": list(prior_ids),
+            "candidate_ids_must_be_new": True, "research_claim_prefix": "Test whether "}
+
+
+def proposal_schema_for_context(context):
+    """Specialize only phase/format constraints; the model still designs the test.
+
+The general schema remains useful for validating saved v1 proposals. The provider
+schema adds JSON Schema enum/pattern/maxItems constraints so an initial response
+cannot masquerade as a revision. The whole-string hypothesis pattern is compatible
+with both search and whole-string matching. Version 4 adds disjoint application-owned
+candidate ID sets; scientific choices remain model-authored. No response is rewritten.
+"""
+    if not isinstance(context, dict):
+        raise ValueError("The provider planning context must be a JSON object.")
+    contract = _round_contract(context.get("validation_feedback"))
+    if "round_contract" in context and context["round_contract"] != contract:
+        raise ValueError("The planning round contract disagrees with Coordinator feedback.")
+    schema = deepcopy(PROPOSAL_SCHEMA)
+    schema["properties"]["action"]["enum"] = contract["allowed_actions"]
+    schema["properties"]["selected_candidate_id"] = {
+        "anyOf": [{"type": "string", "enum": contract["available_candidate_ids"]}, {"type": "null"}]
+    }
+    candidates = schema["properties"]["candidates"]
+    candidates["maxItems"] = contract["max_candidates"]
+    fields = candidates["items"]["properties"]
+    fields["id"] = {"type": "string", "enum": contract["available_candidate_ids"],
+                    "description": "Use a distinct application-owned ID from this round; never reuse an earlier candidate's ID."}
+    fields["parent_id"] = ({"type": "null"} if contract["round"] == 1 else
+                           {"type": "string", "enum": contract["retained_parent_ids"]})
+    fields["research_claim"]["pattern"] = r"^Test whether .+$"
+    fields["research_claim"]["description"] = (
+        "Begin with 'Test whether ' and state a falsifiable synthetic-data comparison; do not state a calculated result."
+    )
+    return schema
 
 _INJECTION_PATTERNS = (
     r"\b(?:ignore|disregard|override|forget)\b.{0,70}\b(?:previous|prior|above|system|developer|instructions?|policy|rules?|schema|safety)\b",
@@ -167,8 +236,10 @@ def schema_issues(value, schema=None, path="proposal") -> list[str]:
     elif expected == "string":
         if not schema.get("minLength", 0) <= len(value.strip()) <= schema.get("maxLength", 99999):
             errors.append(f"{path}: text length exceeds allowed bounds.")
-        if "pattern" in schema and not re.fullmatch(schema["pattern"], value):
-            errors.append(f"{path}: invalid identifier format.")
+        # JSON Schema pattern uses a search, not an implicit whole-string match.
+        # Identifier patterns have their own anchors; the claim prefix does not.
+        if "pattern" in schema and not re.search(schema["pattern"], value):
+            errors.append(f"{path}: text does not match the required format.")
     elif expected == "integer" and not schema.get("minimum", -99999) <= value <= schema.get("maximum", 99999):
         errors.append(f"{path}: integer outside schema bounds.")
     return errors
@@ -254,20 +325,21 @@ def _candidate_assessment(candidate, evidence, topic, constraints, parent_ids):
     source_map = {source["id"]: source for source in evidence if isinstance(source, dict) and "id" in source}
     cited = set()
     direct = caution = False
-    for claim in candidate["evidence_claims"]:
+    for claim_index, claim in enumerate(candidate["evidence_claims"], 1):
         source = source_map.get(claim["source_id"])
         if source is None:
-            errors.append("A candidate cites an invented or unretrieved source ID.")
+            errors.append(f"Evidence claim {claim_index} cites an invented or unretrieved source ID.")
             continue
+        citation = f"Evidence claim {claim_index} ({source['id']})"
         excerpt = claim["summary_excerpt"]
         if excerpt not in source["summary"]:
-            errors.append("A citation excerpt is not an exact substring of its retrieved summary.")
+            errors.append(f"{citation}: the excerpt is not an exact substring of the retrieved summary.")
             continue
         if len(_terms(claim["claim"]) & _terms(excerpt)) < 2:
-            errors.append("A literature claim lacks minimal lexical support in its cited excerpt; human review is required.")
+            errors.append(f"{citation}: the claim lacks minimal lexical support in its cited excerpt; cite an excerpt supporting the stated claim or remove the unsupported claim.")
             continue
         if re.search(r"\b(?:guarantee\w*|prove[sd]?|certainly|inevitably)\b", claim["claim"], re.I):
-            errors.append("Literature claims must not assert proof or guaranteed market outcomes.")
+            errors.append(f"{citation}: literature claims must not assert proof or guaranteed market outcomes.")
             continue
         cited.add(source["id"])
         direct |= source["stance"] == "supports_total_volatility_research" and "total_volatility" in source["topics"]
@@ -277,7 +349,7 @@ def _candidate_assessment(candidate, evidence, topic, constraints, parent_ids):
     if not caution:
         errors.append("Every executable candidate needs a supported methodological-caution claim.")
     if not re.search(r"\b(?:test|whether|hypothes|explore|compare|investigat)", candidate["research_claim"], re.I):
-        errors.append("research_claim must describe a hypothesis to test, not an established performance conclusion.")
+        errors.append("research_claim must describe a hypothesis to test; begin with 'Test whether ' and state the proposed comparison rather than an established performance conclusion.")
     score = {
         "grounding": min(3, len(cited)),
         "methodological_suitability": int(caution) + int(bool(candidate["limitations"])),
@@ -288,7 +360,7 @@ def _candidate_assessment(candidate, evidence, topic, constraints, parent_ids):
             "score": sum(score.values()), "score_breakdown": score}
 
 
-def validate_proposal(output, evidence, topic, constraints=None, parent_ids=None) -> dict:
+def validate_proposal(output, evidence, topic, constraints=None, parent_ids=None, prior_candidate_ids=None) -> dict:
     """Assess candidate validity and transparent pre-outcome scores.
 
 Valid siblings survive a rejected candidate. Global schema, grounding, selected-ID
@@ -313,6 +385,17 @@ or revision-action failures prevent the proposal from being executable.
     if not isinstance(constraints, dict) or set(constraints) - {"signal", "lookback_months", "selection_count"}:
         errors.append("Unknown research-design constraints are not accepted.")
         constraints = {}
+    if prior_candidate_ids is not None:
+        if (not isinstance(prior_candidate_ids, list) or len(prior_candidate_ids) > 3
+                or any(not isinstance(identifier, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,39}", identifier)
+                       for identifier in prior_candidate_ids)
+                or len(set(prior_candidate_ids)) != len(prior_candidate_ids)
+                or (parent_ids is None and prior_candidate_ids)
+                or (parent_ids is not None and (not isinstance(parent_ids, list)
+                    or any(not isinstance(identifier, str) for identifier in parent_ids)
+                    or not set(parent_ids).issubset(prior_candidate_ids)))):
+            errors.append("Prior candidate IDs must preserve the bounded previous round and include all retained parents.")
+            prior_candidate_ids = []
     assessments = []
     candidates = output.get("candidates")
     if isinstance(candidates, list) and not grounding_issues(evidence):
@@ -327,6 +410,10 @@ or revision-action failures prevent the proposal from being executable.
         candidate = row["candidate"]
         if not isinstance(candidate, dict):
             continue
+        if (parent_ids is not None and prior_candidate_ids is not None
+                and candidate.get("id") in prior_candidate_ids):
+            row["errors"].append("Revision candidate ID reuses an earlier candidate, including a retained or pruned node; choose a fresh child ID.")
+            row["valid"] = False
         fingerprint = tuple(candidate.get(key) for key in ("signal", "lookback_months", "selection_count"))
         if all(isinstance(value, (str, int)) for value in fingerprint):
             if fingerprint in specs:
@@ -424,6 +511,7 @@ projection still drops outcome fields if a caller accidentally passes full recor
         "explicit_constraints": deepcopy(constraints),
         "explicit_replication_rationale": replication_rationale,
         "validation_feedback": deepcopy(feedback),
+        "round_contract": _round_contract(feedback),
         "supported_experiments": {
             "executable_signal": "total_volatility",
             "signal_definition": "trailing sample standard deviation of monthly simple returns",

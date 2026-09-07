@@ -1,0 +1,18 @@
+{
+  "test_kind": "mocked_design_real_subprocess_memory_read",
+  "reference": {
+    "journal_record_id": "eed3bd2861a211c1841bd921931de7ad9610e8e94e928403ee48d8a609684aab",
+    "experiment_fingerprint": "eb3b0f678ad669d0b2dbd36037b682e8f6319ff965216d040a9cf0e0d2270ff5",
+    "hypothesis_id": "hyp-v1-d52c05a78f156a54",
+    "run_id": "run-efeb9edb87fdd011"
+  },
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ]
+}

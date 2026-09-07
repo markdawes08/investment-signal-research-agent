@@ -6,15 +6,17 @@ tests elsewhere exercise the bounded Coordinator loop and numerical harness.
 
 from copy import deepcopy
 import json
+import re
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
 from signal_research_agent.llm_design import (
     MAX_CONTEXT_CHARS, MAX_OUTPUT_CHARS, PROPOSAL_SCHEMA, build_context,
-    injection_issues, schema_issues, validate_proposal,
+    injection_issues, proposal_schema_for_context, schema_issues, validate_proposal,
 )
 from signal_research_agent.provider import DEFAULT_MODEL, OpenAIProvider
+from signal_research_agent.models import content_hash
 from signal_research_agent.retrieval import LiteratureRetriever
 
 TOPIC = "Explore whether lower-volatility stocks have better risk-adjusted returns"
@@ -25,13 +27,13 @@ def evidence_fixture():
     return LiteratureRetriever().search(TOPIC + " backtesting research protocol overfitting")
 
 
-def proposal_fixture(lookback=6, selection_count=3):
+def proposal_fixture(lookback=6, selection_count=3, *, candidate_id="total-a"):
     sources = {source["id"]: source for source in evidence_fixture()}
     claims = [{"claim": sources[source_id]["summary"], "source_id": source_id,
                "summary_excerpt": sources[source_id]["summary"]}
               for source_id in ("baker-2010-benchmarks", "arnott-2019-protocol")]
     candidate = {
-        "id": "total-a", "parent_id": None,
+        "id": candidate_id, "parent_id": None,
         "research_claim": "Test whether lower-volatility synthetic stocks have better risk-adjusted returns than the equal-weight benchmark.",
         "signal": "total_volatility", "lookback_months": lookback,
         "selection_count": selection_count, "evidence_claims": claims,
@@ -40,7 +42,7 @@ def proposal_fixture(lookback=6, selection_count=3):
         "limitations": ["Synthetic observations cannot establish a real-market investment effect."],
         "parameter_basis": "agent_design_choice", "adaptation_rationale": None,
     }
-    return {"action": "propose", "candidates": [candidate], "selected_candidate_id": "total-a",
+    return {"action": "propose", "candidates": [candidate], "selected_candidate_id": candidate_id,
             "decision_rationale": "Select the grounded and feasible monthly total-volatility specification.",
             "deferral_reason": None}
 
@@ -129,6 +131,12 @@ class DesignValidationTests(unittest.TestCase):
         self.proposal["candidates"][0]["evidence_claims"][1] = deepcopy(self.proposal["candidates"][0]["evidence_claims"][0])
         self.assertFalse(self.assess()["valid"])
 
+    def test_lexical_feedback_identifies_claim_and_eligible_source(self):
+        self.proposal["candidates"][0]["evidence_claims"][1]["claim"] = "A telescope discovered a previously unknown gaseous nebula."
+        errors = self.assess()["candidates"][0]["errors"]
+        self.assertTrue(any("Evidence claim 2 (arnott-2019-protocol)" in error
+                            and "supporting the stated claim" in error for error in errors))
+
     def test_unsupported_parameters_and_boolean_integers_rejected(self):
         for key, value in (("lookback_months", 9), ("selection_count", 5), ("lookback_months", True), ("signal", "beta"), ("signal", "idiosyncratic_volatility")):
             with self.subTest(key=key, value=value):
@@ -207,6 +215,25 @@ class DesignValidationTests(unittest.TestCase):
         self.assertTrue(self.assess(parent_ids=["total-a"])["valid"])
         self.assertFalse(self.assess(parent_ids=["another-parent"])["valid"])
 
+    def test_revision_cannot_reuse_a_pruned_initial_candidate_id(self):
+        self.proposal["action"] = "revise"
+        self.proposal["candidates"][0].update(id="c3", parent_id="c1")
+        self.proposal["selected_candidate_id"] = "c3"
+        assessment = self.assess(parent_ids=["c1", "c2"], prior_candidate_ids=["c1", "c2", "c3"])
+        self.assertFalse(assessment["valid"])
+        self.assertTrue(any("pruned node" in error for error in assessment["candidates"][0]["errors"]))
+        self.proposal["candidates"][0]["id"] = "fresh-child"
+        self.proposal["selected_candidate_id"] = "fresh-child"
+        self.assertTrue(self.assess(parent_ids=["c1", "c2"], prior_candidate_ids=["c1", "c2", "c3"])["valid"])
+
+    def test_prior_id_validation_is_bounded_and_includes_retained_parents(self):
+        self.proposal["action"] = "revise"
+        self.proposal["candidates"][0].update(id="fresh-child", parent_id="c1")
+        self.proposal["selected_candidate_id"] = "fresh-child"
+        for ids in ([], ["c2"], ["c1", "c1"], ["c1", "c2", "c3", "c4"], [None], "c1"):
+            with self.subTest(ids=ids):
+                self.assertFalse(self.assess(parent_ids=["c1"], prior_candidate_ids=ids)["valid"])
+
     def test_revision_width_and_initial_candidate_bounds(self):
         for index, params in enumerate(((6, 3), (12, 3), (6, 4), (12, 4))):
             if index == 0:
@@ -240,6 +267,100 @@ class DesignValidationTests(unittest.TestCase):
             for value in schema.get("anyOf", []):
                 inspect(value)
         inspect(PROPOSAL_SCHEMA)
+
+    def test_initial_response_schema_forbids_revision_action_and_parent(self):
+        schema = proposal_schema_for_context({"validation_feedback": None})
+        self.proposal = proposal_fixture(candidate_id="r1a")
+        self.assertEqual(schema_issues(self.proposal, schema), [])
+        self.proposal["action"] = "revise"
+        self.assertTrue(schema_issues(self.proposal, schema))
+        self.proposal["action"] = "propose"
+        self.proposal["candidates"][0]["parent_id"] = "prior-parent"
+        self.assertTrue(schema_issues(self.proposal, schema))
+
+    def test_revision_response_schema_enforces_action_width_and_retained_parents(self):
+        context = {"validation_feedback": {"round": 2, "parent_ids": ["total-a", "total-b"]}}
+        schema = proposal_schema_for_context(context)
+        self.proposal["action"] = "revise"
+        self.proposal["candidates"][0].update(id="r2a", parent_id="total-a")
+        self.proposal["selected_candidate_id"] = "r2a"
+        self.assertEqual(schema_issues(self.proposal, schema), [])
+        for field, value in (("action", "propose"), ("parent_id", None), ("parent_id", "unretained-parent")):
+            proposal = deepcopy(self.proposal)
+            (proposal if field == "action" else proposal["candidates"][0])[field] = value
+            self.assertTrue(schema_issues(proposal, schema), (field, value))
+        self.proposal["candidates"] *= 3
+        self.assertTrue(schema_issues(self.proposal, schema))
+
+    def test_phase_schema_candidate_and_selection_ids_are_disjoint(self):
+        initial = proposal_schema_for_context({})
+        revision = proposal_schema_for_context({"validation_feedback": {
+            "round": 2, "parent_ids": ["r1a", "r1b"], "prior_candidate_ids": ["r1a", "r1b", "r1c"]}})
+        initial_ids = initial["properties"]["candidates"]["items"]["properties"]["id"]["enum"]
+        revised_ids = revision["properties"]["candidates"]["items"]["properties"]["id"]["enum"]
+        self.assertEqual(initial_ids, ["r1a", "r1b", "r1c"])
+        self.assertEqual(revised_ids, ["r2a", "r2b"])
+        self.assertFalse(set(initial_ids) & set(revised_ids))
+        for schema, allowed in ((initial, initial_ids), (revision, revised_ids)):
+            selected_schema = schema["properties"]["selected_candidate_id"]
+            self.assertEqual(selected_schema["anyOf"][0]["enum"], allowed)
+            self.assertEqual(schema_issues(None, selected_schema), [])
+            self.assertEqual(schema_issues(allowed[0], selected_schema), [])
+            self.assertTrue(schema_issues("unused-in-this-round", selected_schema))
+        self.assertEqual(initial["properties"]["candidates"]["items"]["properties"]["lookback_months"],
+                         revision["properties"]["candidates"]["items"]["properties"]["lookback_months"])
+
+    def test_provider_schema_rejects_reused_pruned_id_and_cross_round_selection(self):
+        schema = proposal_schema_for_context({"validation_feedback": {
+            "round": 2, "parent_ids": ["r1a", "r1b"], "prior_candidate_ids": ["r1a", "r1b", "r1c"]}})
+        proposal = proposal_fixture(candidate_id="r1c")
+        proposal["action"] = "revise"
+        proposal["candidates"][0]["parent_id"] = "r1a"
+        self.assertTrue(schema_issues(proposal, schema))
+        proposal["candidates"][0]["id"] = "r2a"
+        self.assertTrue(schema_issues(proposal, schema))
+        proposal["selected_candidate_id"] = "r2a"
+        self.assertEqual(schema_issues(proposal, schema), [])
+
+    def test_provider_claim_format_is_explicit_without_breaking_general_v1_validation(self):
+        self.proposal = proposal_fixture(candidate_id="r1a")
+        self.proposal["candidates"][0]["research_claim"] = "Hypothesis: lower total-volatility synthetic stocks have better risk-adjusted returns than the equal-weight benchmark."
+        self.assertTrue(self.assess()["valid"])
+        self.assertEqual(schema_issues(self.proposal), [])
+        self.assertTrue(schema_issues(self.proposal, proposal_schema_for_context({})))
+        self.proposal["candidates"][0]["research_claim"] = "Test whether lower total-volatility synthetic stocks have better risk-adjusted returns than the equal-weight benchmark."
+        self.assertEqual(schema_issues(self.proposal, proposal_schema_for_context({})), [])
+
+    def test_whole_string_claim_pattern_has_portable_matching_semantics(self):
+        schema = proposal_schema_for_context({})
+        pattern = schema["properties"]["candidates"]["items"]["properties"]["research_claim"]["pattern"]
+        self.assertEqual(pattern, "^Test whether .+$")
+        claim = self.proposal["candidates"][0]["research_claim"]
+        self.assertTrue(re.search(pattern, claim))
+        self.assertTrue(re.fullmatch(pattern, claim))
+        for invalid in ("Test whether", "Test whether ", "Among synthetic stocks, lower volatility may improve risk-adjusted returns."):
+            with self.subTest(claim=invalid):
+                self.assertIsNone(re.search(pattern, invalid))
+                self.assertIsNone(re.fullmatch(pattern, invalid))
+                proposal = deepcopy(self.proposal)
+                proposal["candidates"][0]["research_claim"] = invalid
+                self.assertTrue(schema_issues(proposal, schema))
+
+    def test_live_failure_shape_cannot_satisfy_revision_schema(self):
+        # Minimal reproduction of real batch_002's second response shape. This
+        # fixture does not call a model or reinterpret the failed live attempt.
+        proposal = proposal_fixture()
+        proposal["candidates"] = [proposal_fixture(*params)["candidates"][0]
+                                  for params in ((6, 3), (6, 4), (12, 3))]
+        for index, candidate in enumerate(proposal["candidates"], 3):
+            candidate["id"] = f"cand{index}"
+            candidate["research_claim"] = "Among synthetic stocks, low-volatility portfolios may exhibit better risk-adjusted returns than the benchmark."
+        proposal["selected_candidate_id"] = "cand3"
+        self.assertEqual(schema_issues(proposal), [])
+        schema = proposal_schema_for_context({"validation_feedback": {"round": 2, "parent_ids": ["cand2", "cand1"]}})
+        errors = schema_issues(proposal, schema)
+        for part in ("proposal.action", "proposal.candidates:", "parent_id", "research_claim"):
+            self.assertTrue(any(part in error for error in errors), part)
 
 
 class PlanningContextTests(unittest.TestCase):
@@ -302,10 +423,45 @@ class PlanningContextTests(unittest.TestCase):
             build_context(TOPIC, self.evidence, [], feedback={"metrics": {"sharpe": 12}})
         with self.assertRaises(ValueError):
             build_context(TOPIC, self.evidence, [], constraints={"lookback_months": True})
-        feedback = {"retained_parent_ids": ["total-a"], "objections": ["Supported lookback choices are 6 or 12."]}
+        feedback = {"round": 2, "parent_ids": ["total-a"], "objections": ["Supported lookback choices are 6 or 12."]}
         context = build_context(TOPIC, self.evidence, [], feedback=feedback, constraints={"lookback_months": 6})
         self.assertEqual(context["validation_feedback"], feedback)
         self.assertEqual(context["explicit_constraints"], {"lookback_months": 6})
+
+    def test_context_round_contract_changes_only_after_actual_feedback(self):
+        initial = build_context(TOPIC, self.evidence, [])
+        feedback = {"round": 2, "parent_ids": ["total-a"], "objections": ["Supported lookback choices are 6 or 12."]}
+        revision = build_context(TOPIC, self.evidence, [], feedback=feedback)
+        self.assertEqual(initial["round_contract"]["allowed_actions"], ["propose", "defer"])
+        self.assertEqual(revision["round_contract"]["allowed_actions"], ["revise", "defer"])
+        self.assertEqual(revision["round_contract"]["retained_parent_ids"], ["total-a"])
+        self.assertEqual(revision["round_contract"]["max_candidates"], 2)
+        self.assertEqual(initial["supported_experiments"], revision["supported_experiments"])
+
+    def test_context_exposes_all_prior_ids_including_pruned_candidates(self):
+        feedback = {"round": 2, "parent_ids": ["r1a", "r1b"],
+                    "prior_candidate_ids": ["r1a", "r1b", "r1c"],
+                    "objections": ["A supported bounded revision is required."]}
+        context = build_context(TOPIC, self.evidence, [], feedback=feedback)
+        contract = context["round_contract"]
+        self.assertEqual(contract["prior_candidate_ids"], ["r1a", "r1b", "r1c"])
+        self.assertEqual(contract["retained_parent_ids"], ["r1a", "r1b"])
+        self.assertEqual(contract["available_candidate_ids"], ["r2a", "r2b"])
+        self.assertEqual(context["validation_feedback"]["prior_candidate_ids"], feedback["prior_candidate_ids"])
+
+    def test_invalid_or_unbounded_round_contract_is_rejected(self):
+        for feedback in ({"round": 3, "parent_ids": ["total-a"]},
+                         {"round": 2, "parent_ids": []},
+                         {"round": 2, "parent_ids": ["total-a", "total-a"]},
+                         {"round": 2, "parent_ids": ["total-a", "total-b", "total-c"]}):
+            with self.assertRaises(ValueError):
+                build_context(TOPIC, self.evidence, [], feedback=feedback)
+
+    def test_context_refuses_colliding_or_incomplete_prior_id_records(self):
+        for feedback in ({"round": 2, "parent_ids": ["r1a"], "prior_candidate_ids": ["r1b"]},
+                         {"round": 2, "parent_ids": ["r2a"], "prior_candidate_ids": ["r2a"]}):
+            with self.assertRaises(ValueError):
+                build_context(TOPIC, self.evidence, [], feedback=feedback)
 
     def test_replication_rationale_is_explicit_and_screened(self):
         rationale = "Independently reproduce the same scientific experiment as a reproducibility check."
@@ -335,7 +491,7 @@ class ProviderAdapterTests(unittest.TestCase):
         self.environment.start()
         self.addCleanup(self.environment.stop)
         self.response = SimpleNamespace(status="completed", model="gpt-4.1-mini-2025-04-14",
-                                        id="resp_test_123", output_text=json.dumps(proposal_fixture()),
+                                        id="resp_test_123", output_text=json.dumps(proposal_fixture(candidate_id="r1a")),
                                         usage=SimpleNamespace(input_tokens=400, output_tokens=300, total_tokens=700))
         self.client = Mock()
         self.client.responses.create.return_value = self.response
@@ -350,8 +506,11 @@ class ProviderAdapterTests(unittest.TestCase):
     def test_supported_sdk_request_and_application_observed_metadata(self):
         result = self.call()
         self.assertEqual(result["status"], "completed")
-        self.assertEqual(result["output"], proposal_fixture())
+        self.assertEqual(result["output"], proposal_fixture(candidate_id="r1a"))
         self.assertTrue(result["metadata"]["actual_provider_call"])
+        self.assertEqual(result["metadata"]["provider_response_status"], "completed")
+        self.assertIsNone(result["metadata"]["incomplete_reason"])
+        self.assertIsNone(result["metadata"]["provider_error_code"])
         self.assertEqual(result["metadata"]["response_id"], "resp_test_123")
         self.assertEqual(result["metadata"]["usage"]["total_tokens"], 700)
         self.assertIsNone(result["metadata"]["cost_usd"])
@@ -360,12 +519,57 @@ class ProviderAdapterTests(unittest.TestCase):
         self.assertFalse(request["store"])
         self.assertNotIn("tools", request)
         self.assertNotIn("reasoning", request)
-        self.assertEqual(request["text"]["format"]["schema"], PROPOSAL_SCHEMA)
+        self.assertEqual(request["text"]["format"]["schema"], proposal_schema_for_context({"research_direction": TOPIC}))
+        self.assertEqual(result["metadata"]["response_schema_hash"], content_hash(request["text"]["format"]["schema"]))
+        self.assertEqual(result["metadata"]["requested_max_output_tokens"], 2500)
+        self.assertEqual(request["max_output_tokens"], 2500)
         self.assertTrue(request["text"]["format"]["strict"])
         self.assertNotIn("unit-test-credential", json.dumps(request))
         self.assertEqual(self.sdk.OpenAI.call_args.kwargs["max_retries"], 0)
         self.assertEqual(self.sdk.OpenAI.call_args.kwargs["base_url"], "https://api.openai.com/v1")
         self.client.close.assert_called_once()
+
+    def test_actual_sdk_request_uses_phase_specific_revision_schema(self):
+        context = build_context(TOPIC, evidence_fixture(), [], feedback={
+            "round": 2, "parent_ids": ["parent-a", "parent-b"],
+            "objections": ["Supported lookback_months choices are 6 or 12."]})
+        output = proposal_fixture()
+        output["action"] = "revise"
+        output["candidates"][0].update(id="r2a", parent_id="parent-a")
+        output["selected_candidate_id"] = "r2a"
+        self.response.output_text = json.dumps(output)
+        result = OpenAIProvider().generate(context)
+        self.assertEqual(result["status"], "completed")
+        schema = self.client.responses.create.call_args.kwargs["text"]["format"]["schema"]
+        self.assertEqual(schema["properties"]["action"]["enum"], ["revise", "defer"])
+        self.assertEqual(schema["properties"]["candidates"]["maxItems"], 2)
+        self.assertEqual(schema["properties"]["candidates"]["items"]["properties"]["parent_id"],
+                         {"type": "string", "enum": ["parent-a", "parent-b"]})
+        self.assertEqual(schema["properties"]["candidates"]["items"]["properties"]["id"]["enum"], ["r2a", "r2b"])
+        self.assertEqual(schema["properties"]["selected_candidate_id"]["anyOf"][0]["enum"], ["r2a", "r2b"])
+        self.assertEqual(schema_issues(output, schema), [])
+        self.assertEqual(result["metadata"]["response_schema_hash"], content_hash(schema))
+        self.assertIn("round_contract", self.client.responses.create.call_args.kwargs["input"][0]["content"])
+
+    def test_mismatched_round_contract_never_reaches_sdk(self):
+        context = build_context(TOPIC, evidence_fixture(), [])
+        context["round_contract"]["round"] = 2
+        result = OpenAIProvider().generate(context)
+        self.assertEqual(result["status"], "invalid_context")
+        self.assertFalse(result["metadata"]["actual_provider_call"])
+        self.import_mock.assert_not_called()
+
+    def test_requested_output_budget_is_logged_without_automatic_increase(self):
+        for cap in (256, 2500, 4000):
+            with self.subTest(cap=cap):
+                result = self.call(max_output_tokens=cap)
+                self.assertEqual(result["metadata"]["requested_max_output_tokens"], cap)
+                self.assertEqual(self.client.responses.create.call_args.kwargs["max_output_tokens"], cap)
+        with patch.dict("os.environ", {}, clear=True):
+            result = self.call()
+        self.assertEqual(result["status"], "missing_credentials")
+        self.assertEqual(result["metadata"]["requested_max_output_tokens"], 2500)
+        self.assertEqual(result["metadata"]["response_schema_hash"], content_hash(proposal_schema_for_context({"research_direction": TOPIC})))
 
     def test_missing_credentials_makes_no_sdk_import_or_call(self):
         with patch.dict("os.environ", {}, clear=True):
@@ -417,6 +621,78 @@ class ProviderAdapterTests(unittest.TestCase):
         self.assertEqual(result["status"], "provider_incomplete")
         self.assertIsNone(result["output"])
         self.assertEqual(result["metadata"]["usage"]["total_tokens"], 700)
+
+    def test_incomplete_reason_is_preserved_only_when_allowlisted(self):
+        self.response.status = "incomplete"
+        for reason in ("max_output_tokens", "content_filter"):
+            with self.subTest(reason=reason):
+                self.response.incomplete_details = SimpleNamespace(reason=reason)
+                result = self.call()
+                self.assertEqual(result["status"], "provider_incomplete")
+                self.assertEqual(result["metadata"]["status"], result["status"])
+                self.assertEqual(result["metadata"]["provider_response_status"], "incomplete")
+                self.assertEqual(result["metadata"]["incomplete_reason"], reason)
+                self.assertIsNone(result["output"])
+
+    def test_failed_provider_response_has_distinct_status_and_safe_code(self):
+        self.response.status = "failed"
+        self.response.error = SimpleNamespace(code="server_error", message="unit-test-sensitive-error-detail")
+        self.response.output_text = "unit-test-untrusted-partial-output"
+        result = self.call()
+        self.assertEqual(result["status"], "provider_failed")
+        self.assertEqual(result["metadata"]["status"], result["status"])
+        self.assertEqual(result["metadata"]["provider_response_status"], "failed")
+        self.assertEqual(result["metadata"]["provider_error_code"], "server_error")
+        self.assertEqual(result["metadata"]["usage"]["total_tokens"], 700)
+        self.assertIsNone(result["output"])
+        self.assertNotIn("unit-test-sensitive-error-detail", json.dumps(result))
+        self.assertNotIn("unit-test-untrusted-partial-output", json.dumps(result))
+        self.client.responses.create.assert_called_once()
+
+    def test_nonfinal_response_states_are_explicit_and_never_parsed_as_complete(self):
+        for status in ("in_progress", "cancelled", "queued"):
+            with self.subTest(status=status):
+                self.response.status = status
+                result = self.call()
+                self.assertEqual(result["status"], "provider_unexpected_status")
+                self.assertEqual(result["metadata"]["status"], result["status"])
+                self.assertEqual(result["metadata"]["provider_response_status"], status)
+                self.assertIsNone(result["output"])
+
+    def test_unknown_diagnostic_strings_are_not_persisted(self):
+        for value in ("unit-test-secret-bearing-diagnostic", "future_unknown_enum", None, {"unexpected": "value"}):
+            with self.subTest(value=value):
+                self.response.status = value
+                self.response.incomplete_details = SimpleNamespace(reason=value)
+                self.response.error = SimpleNamespace(code=value, message="unit-test-private-message")
+                result = self.call()
+                self.assertEqual(result["status"], "provider_unexpected_status")
+                for key in ("provider_response_status", "incomplete_reason", "provider_error_code"):
+                    self.assertIsNone(result["metadata"][key])
+                self.assertNotIn("unit-test-secret-bearing-diagnostic", json.dumps(result))
+                self.assertNotIn("unit-test-private-message", json.dumps(result))
+
+    def test_unknown_incomplete_reason_remains_unknown_without_reclassification(self):
+        self.response.status = "incomplete"
+        self.response.incomplete_details = SimpleNamespace(reason="unknown-future-reason")
+        result = self.call()
+        self.assertEqual(result["status"], "provider_incomplete")
+        self.assertIsNone(result["metadata"]["incomplete_reason"])
+        self.assertNotIn("unknown-future-reason", json.dumps(result))
+
+    def test_http_exception_can_supply_only_an_allowlisted_error_code(self):
+        for code in ("rate_limit_exceeded", "unit-test-sensitive-unknown-code"):
+            with self.subTest(code=code):
+                error = RuntimeError("unit-test-private-authentication-message")
+                error.code = code
+                self.client.responses.create.side_effect = error
+                result = self.call()
+                self.assertEqual(result["status"], "provider_error")
+                self.assertEqual(result["metadata"]["provider_error_code"],
+                                 "rate_limit_exceeded" if code == "rate_limit_exceeded" else None)
+                self.assertIsNone(result["metadata"]["provider_response_status"])
+                self.assertNotIn("unit-test-sensitive-unknown-code", json.dumps(result))
+                self.assertNotIn("unit-test-private-authentication-message", json.dumps(result))
 
     def test_context_and_output_limits(self):
         result = OpenAIProvider().generate({"text": "x" * MAX_CONTEXT_CHARS})

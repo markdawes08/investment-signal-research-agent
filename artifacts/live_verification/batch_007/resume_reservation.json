@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "source_summary_hash": "d43d9f3b06468aabf7b3c5c368f0cdc4482f0ff1d76a81ac3f765ca87635cef0",
+  "source_summary_path": "batch_006/live_verification_results.json",
+  "previous_provider_attempts": 5,
+  "previous_provider_calls": 5,
+  "reserved_max_attempts": 4,
+  "aggregate_reserved_max_attempts": 9,
+  "reason": "Preserve the provider budget even if this resume is interrupted before its final summary."
+}

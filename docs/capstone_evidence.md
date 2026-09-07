@@ -2,7 +2,7 @@
 
 **Deterministic synthetic data · Historical research only · Not investment advice · No trade execution · Not evidence of future performance · Not evidence about real markets**
 
-This is a factual handoff for a later report, slide deck, and recording. Those presentation deliverables are not part of this repository extension. Implementation and offline verification are complete. **Genuine-provider verification is blocked by missing `OPENAI_API_KEY`; the extension is not fully live-verified.**
+This is a factual handoff for a later report, slide deck, and recording. Those presentation deliverables are not part of this repository extension. **All four genuine-provider verification checks passed.** Batch 007 completed controlled feedback/revision C and reused integrity-verified batch 006 A research, B persisted duplicate prevention, and D explicit-choice evidence. The resume made two new calls, bringing the aggregate to seven including the preserved failed C attempt. The full history and limits are documented in [the diagnosis](live_verification_troubleshooting.md). Local implementation and verification are complete; Git commands and publication remain with the owner.
 
 ## Problem and intended user
 
@@ -23,13 +23,23 @@ All provider interactions in the unittest and agentic acceptance suites are expl
 | Verification | Actual result | Evidence |
 |---|---|---|
 | Source baseline before editing | 97 tests passed; 18.273s; original evaluation 31/31 | [Verification record](../artifacts/extension_verification/verification_results.json) |
-| Installed extension, Python 3.13.5, optional SDK 2.54.0 | 214/214 tests passed; 41.479s | [Test log](../artifacts/extension_verification/test_console_output.txt), [JSON](../artifacts/extension_verification/unit_test_results.json) |
+| Earlier installed extension, Python 3.13.5, optional SDK 2.54.0 | 214/214 tests passed; 41.479s | [Test log](../artifacts/extension_verification/test_console_output.txt), [JSON](../artifacts/extension_verification/unit_test_results.json) |
+| Earlier phase-contract correction, reinstalled package | 225/225 tests passed; 42.478s; offline 31/31, mocked agentic 12/12, and saved v1 replay passed; zero additional real calls | [Phase-contract verification](../artifacts/extension_verification/phase_contract_fix/verification_results.json), [test log](../artifacts/extension_verification/phase_contract_fix/tests.txt) |
+| Earlier provider-diagnostic correction, reinstalled package | 232/232 tests passed; 42.708s; offline 31/31, mocked agentic 12/12, and saved v1 replay passed; zero additional real calls | [Diagnostic verification](../artifacts/extension_verification/provider_diagnostics_fix/verification_results.json), [test log](../artifacts/extension_verification/provider_diagnostics_fix/tests.txt) |
+| Earlier schema-compatibility correction, reinstalled package | 234/234 tests passed; 23.121s; offline 31/31, mocked agentic 12/12, and saved v1 replay passed; zero additional real calls | [Schema verification](../artifacts/extension_verification/schema_compatibility_fix/verification_results.json), [test log](../artifacts/extension_verification/schema_compatibility_fix/tests.txt) |
+| Current candidate-identity/resume correction, reinstalled package | **259/259 tests passed; 48.678s; offline 31/31, mocked agentic 12/12, saved v1 replay and genuine A replay passed; zero additional real calls** | [Current verification](../artifacts/extension_verification/candidate_identity_fix/verification_results.json), [test log](../artifacts/extension_verification/candidate_identity_fix/tests.txt), [genuine A replay](../artifacts/extension_verification/candidate_identity_fix/live_saved_replay/result.json) |
 | Preserved offline acceptance | 31/31 passed; 1.594s | [Offline evaluation](../artifacts/offline_evaluation/evaluation_results.json) |
 | Scripted-provider agentic acceptance | 12/12 passed; 1.526s; zero real calls | [Agentic evaluation](../artifacts/agentic_evaluation/evaluation_results.json) |
-| Isolated source copy, Python 3.11.9, base installation without OpenAI SDK | 214 tests passed; 46.083s; both acceptance suites, example, corpus and replay succeeded | [Clean-environment checks](../artifacts/extension_verification/verification_results.json) |
+| Earlier isolated source copy, Python 3.11.9, base installation without OpenAI SDK | 214 tests passed; 46.083s; both acceptance suites, example, corpus and replay succeeded | [Clean-environment checks](../artifacts/extension_verification/verification_results.json) |
 | Missing credentials in fresh base environment | Explicit exit 2; no silent offline fallback | [Clean-environment checks](../artifacts/extension_verification/verification_results.json) |
 | Actual SDK call interface | Installed `Responses.create` signature supports configured arguments; no API call made | [SDK check](../artifacts/extension_verification/verification_results.json) |
-| Genuine provider batch | `blocked_missing_credentials`; **0 actual provider calls**, 1 adapter invocation | [Live status](../artifacts/live_verification/live_verification_results.json), [A attempt](../artifacts/live_verification/batch_001/A_research/result.json) |
+| Initial genuine provider batch | `blocked_missing_credentials`; **0 actual provider calls**, 1 adapter invocation | [Preserved initial A attempt](../artifacts/live_verification/batch_001/A_research/result.json) |
+| Owner's second genuine provider batch | `malformed_output`; **2 actual provider calls**, 9,008 total tokens, 34.150s; no lock or backtest | [Preserved batch](../artifacts/live_verification/batch_002/live_verification_results.json), [diagnosis](live_verification_troubleshooting.md) |
+| Owner's third genuine provider batch | `provider_incomplete`; **1 actual provider call**, 2,619 input tokens, zero output tokens, 2.513s; exact termination cause unknown; no lock or backtest | [Preserved batch](../artifacts/live_verification/batch_003/live_verification_results.json) |
+| Batch 004 | `missing_credentials`; zero calls | [Preserved batch](../artifacts/live_verification/batch_004/live_verification_results.json) |
+| Earlier batch 005 | `provider_incomplete`, reason `max_output_tokens`; **1 actual call**, 2,619 input tokens, zero output tokens, 4.097s; no lock or backtest | [Preserved batch](../artifacts/live_verification/batch_005/live_verification_results.json) |
+| Earlier genuine batch 006 | A/B/D passed, C failed; 5 actual calls; 20,779 total tokens; 76.129s | [Preserved verification](../artifacts/live_verification/batch_006/live_verification_results.json) |
+| Completed genuine batch 007 resume | **4/4 checks passed; 2 new calls, 7 aggregate calls; 8,679 new tokens; 26.677s for the resume** | [Completed live verification](../artifacts/live_verification/batch_007/live_verification_results.json), [evidence integrity review](../artifacts/extension_verification/live_evidence_review.json) |
 
 All original 97 tests remain, preserving the offline behavioral protections. New mode tests extend supported choices rather than removing the old fixed contract. An explicit beta-adaptation test was corrected to name total volatility in the executable claim; it still verifies honest adaptation, rather than allowing beta-labeled output from a total-volatility harness. Additional tests cover strict output, citations, prompt injection, partial constraints, feedback and call budgets, provider failures, persistent process restarts, memory exclusion, tampering, numerical gates, and saved replay.
 
@@ -64,7 +74,7 @@ In the [deliberately scripted feedback case](../artifacts/agentic_evaluation/bat
 
 The next provider context contains that objection and retained parent ID. Candidate `design-b`, parent `design-a`, proposes lookback 6 and selection count 3. The application validates the new object, locks it, generates data, executes 114 synthetic observations, and receives the independent Skeptic verdict. The [audit](../artifacts/agentic_evaluation/batch_002/feedback_revision/audit.jsonl) shows two rounds before locking and no pre-lock results. This verifies actual application feedback plumbing; the provider response is scripted and is not evidence of a successful live model revision.
 
-Live case C deliberately adds a requirement to state same-close execution and zero latency in limitations. It records whether the real model receives an objection and then revises or defers. If the first proposal already satisfies that condition, the script reports that no feedback was demonstrated and does not force another attempt.
+Live case C deliberately adds a requirement to state same-close execution and zero latency in limitations. In the successful [batch 007 C result](../artifacts/live_verification/batch_007/C_controlled_feedback/result.json), initial `r1a` lacked this limitation. The actual objection appeared in the second provider context; the model returned `r2a`, parent `r1a`, with the limitation and valid 6/3 parameters. It passed both search gates, locked `hyp-v1-22fb628b816eadfc`, executed 114 synthetic observations, and passed all 19 independent Skeptic checks. There were three initial candidates, a two-candidate beam, two revised children, and two actual calls. The other child, `r2b`, was rejected for duplicate parameters and the missing limitation. This condition was deliberately injected to demonstrate pre-lock methodological feedback; no seed, data, or outcome was changed. If a first proposal already satisfies the condition, the script reports that no feedback was demonstrated and does not force another attempt.
 
 ## Exact verification commands
 
@@ -83,19 +93,23 @@ From the repository root, the installed primary interpreter was `.\.venv\Scripts
 
 Fresh-copy commands were `py -3.11 -m venv .venv`, `.\.venv\Scripts\python.exe -m pip install .`, then the same test, offline evaluation, agentic evaluation, corpus, research and replay commands. The clean LLM command returned the expected missing-credentials status with exit 2. SDK signature inspection used Python `inspect.signature` without contacting the provider. Full source-file fingerprints and measured exit codes are in the verification JSON.
 
-## Live verification still needed
+## Completed live verification
 
-A genuine research run A was not completed because no process, user, or machine `OPENAI_API_KEY` was configured. B persisted-memory behavior, C controlled live feedback, and D explicit live parameter choices remain unattempted. Actual model ID, response IDs, token usage and cost remain unknown; none was fabricated. The [recorded attempt](../artifacts/live_verification/batch_001/A_research/result.json) explicitly reports `missing_credentials` and zero actual calls.
+Latest update: all four checks passed after batch 007 resumed C. The verified batch 006/007 sequence used seven actual calls and seven adapter attempts against the combined limit of 16. Five were earlier calls, including the failed C pair; only two were new. Combined usage was 20,997 input tokens plus 8,461 output tokens, or 29,458 total. The resume took 26.677 seconds. Across all preserved batches there have been eleven distinct actual calls; reused evidence is not counted twice. The actual model remains `gpt-4.1-mini-2025-04-14` with the 2,500-token cap. Cost remains unknown. No further live retry is needed.
 
-Configure the local key with hidden input and rerun the bounded batch:
+The real [A run](../artifacts/live_verification/batch_006/A_research/result.json) locked `hyp-v1-72e2697bc0f0e49a` with lookback 6 and selection count 3, executed 114 synthetic observations, and received `supported_in_synthetic_fixture_only`. Synthetic strategy annualized return is 5.2313% and Sharpe 1.090121, versus benchmark 6.5876% and 0.947628. These figures describe the synthetic fixture, not real investment performance. [D](../artifacts/live_verification/batch_006/D_explicit_choices/result.json) independently honored the explicit 6/3 constraint and completed. Actual model IDs, response IDs, and token usage are in each result; monetary cost remains unknown.
+
+The real [B request](../artifacts/live_verification/batch_006/B_duplicate/result.json) read prior planning memory, identified the same scientific fingerprint, and returned `duplicate_deferred` with no backtest. Its prior reference is A's hypothesis above and journal record `0360108cdd5a3e0bc6ef88ff8fba214d5bcdbdf0e856158c74b742d19e2db7a0`. Prior performance was excluded from the provider planning context.
+
+In the earlier real [C failure](../artifacts/live_verification/batch_006/C_controlled_feedback/result.json), the second response supplied the required limitation and valid 6/3 parameters but reused `c3`, an ID from a pruned initial candidate. The whole-tree gate correctly rejected it. Current provider schemas reserve disjoint IDs for the two rounds, and validation checks all earlier IDs before selection. The successful resumed C used prompt `research-design-v3` and schema `research-proposal-v4`; reused A/B/D evidence retains its original prompt v2/schema v3. Those runs were verified, not rerun or relabeled with the newer versions. Failed attempts remain unchanged.
+
+The owner's existing PowerShell environment key worked. The exact successful resume command was:
 
 ```powershell
-$env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new('', (Read-Host 'OpenAI API key' -AsSecureString)).Password
-$env:OPENAI_MODEL = 'gpt-4.1-mini-2025-04-14'
-.\.venv\Scripts\python.exe scripts/run_live_verification.py --output-dir artifacts/live_verification
+.\.venv\Scripts\python.exe scripts/run_live_verification.py --resume-batch artifacts/live_verification/batch_006
 ```
 
-The batch has at most 16 adapter attempts and at most four per run including retries. It preserves every attempt in a new directory and does not change prompts, fixture seeds, or settings to chase outcomes. A failed or incomplete batch must remain labeled accordingly. Never paste a credential into chat or a command argument.
+This source is already resumed; running the same resume again is correctly refused. The batch has at most 16 adapter attempts and at most four per run including retries. A durable reservation prevents an interrupted resume from resetting the budget. It preserves every attempt in a new directory and does not change fixture seeds or settings to chase outcomes. The provider-contract fixes addressed recorded format failures, not numerical results. A failed or incomplete historical batch remains labeled accordingly. Never paste a credential into chat or a command argument.
 
 ## Safety and limitations
 
@@ -103,7 +117,7 @@ Input screening precedes provider access. The model has no tools, arbitrary code
 
 Human intervention is required for refusals, unsupported designs, insufficient/conflicting grounding, unresolved output objections, provider/budget failures, duplicates without rationale, data/leakage failures, altered locks, invalid memory/replay, or unreliable conclusions. A valid unsupported synthetic result is still a completed research outcome.
 
-Limits include heuristic English safety and claim checks, a small curated corpus, four executable parameter combinations, local rather than process-isolated agents, same-close execution, a fabricated complete universe, zero risk-free rate, no statistical significance or real-market generalization, and unkeyed local chains that cannot detect valid-tail deletion or complete rewriting without a checkpoint. SDK timeouts are HTTP timeouts, not operating-system deadlines. Replication is numerical and can differ at final floating-point bits across interpreter versions. Real-provider behavior remains unverified until the missing credential is configured and actual calls complete.
+Limits include heuristic English safety and claim checks, a small curated corpus, four executable parameter combinations, local rather than process-isolated agents, same-close execution, a fabricated complete universe, zero risk-free rate, no statistical significance or real-market generalization, and unkeyed local chains that cannot detect valid-tail deletion or complete rewriting without a checkpoint. SDK timeouts are HTTP timeouts, not operating-system deadlines. Replication is numerical and can differ at final floating-point bits across interpreter versions. All required live checks passed; this bounded demonstration does not guarantee every future model proposal will satisfy the schema or scientific grounding checks.
 
 ## Short recording sequence
 
@@ -113,9 +127,9 @@ Limits include heuristic English safety and claim checks, a small curated corpus
 4. Clearly announce “scripted-provider test”; open the feedback example and trace invalid 9-month proposal → objection → valid 6-month child.
 5. Show the first/second shared-memory runs and subprocess duplicate reference; show no second backtest and no prior metrics in planning context.
 6. Replay the saved 6/3 specification and show zero provider calls and matching numerical output.
-7. Show the separate live status honestly. After local credentials are configured, run the live script once and use only its actual recorded outcomes; keep incomplete checks visible.
+7. Show the completed live summary and trace actual `r1a` objection → `r2a` revision → lock → Skeptic review in batch 007. Show reused A/B/D references and preserved failed C separately. The recording can use saved evidence and replay without additional paid calls.
 8. End with the measured tests, independent Skeptic limits, and remaining research work.
 
 ## Repository handoff
 
-Existing public repository URL: [investment-signal-research-agent](https://github.com/markdawes08/investment-signal-research-agent). All Git commands and publication remain with the owner. No new commit, pushed SHA, or newly published contents are claimed. The local extension and this evidence handoff are ready for review; the sole missing external verification prerequisite is a usable provider credential/account.
+Existing public repository URL: [investment-signal-research-agent](https://github.com/markdawes08/investment-signal-research-agent). All Git commands and publication remain with the owner. No new commit, pushed SHA, or newly published contents are claimed. The local extension and evidence handoff are complete, including successful genuine research, persistent duplicate prevention, controlled feedback/revision, and explicit supported choices. The report, slides, and recorded presentation are separate deliverables.

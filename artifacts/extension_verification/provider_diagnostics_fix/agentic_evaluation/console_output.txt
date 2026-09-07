@@ -1,0 +1,14 @@
+LLM-assisted research MVP | Deterministic synthetic data | Historical research only | Not investment advice | No trade execution | Not evidence of future performance | Not evidence about real markets
+Mocked agentic evaluation: 12/12 passed; real provider calls: 0
+[PASS] accepted_6_months_3_assets
+[PASS] accepted_6_months_4_assets
+[PASS] accepted_12_months_3_assets
+[PASS] accepted_12_months_4_assets
+[PASS] actual_validation_feedback_changes_proposal
+[PASS] persisted_memory_prevents_duplicate
+[PASS] new_process_detects_same_experiment
+[PASS] necessary_grounding_removal_blocks_provider_and_backtest
+[PASS] current_and_prior_performance_excluded
+[PASS] saved_specification_replays_without_provider
+[PASS] sensitive_request_has_zero_provider_calls
+[PASS] mock_results_never_claim_live_execution

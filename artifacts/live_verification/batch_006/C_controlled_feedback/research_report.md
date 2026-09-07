@@ -1,0 +1,660 @@
+# Investment Signal Research Agent
+
+**LLM-assisted research MVP | Deterministic synthetic data | Historical research only | Not investment advice | No trade execution | Not evidence of future performance | Not evidence about real markets**
+
+Run: `run-efeb9edb87fdd011`
+
+Status: **search_gate_failed**
+
+Verdict: **rejected**
+
+Human intervention required: **True**
+
+Synthetic results describe this fixture only; they provide no evidence about real markets.
+
+## Research direction
+
+Explore whether lower-volatility stocks have better risk-adjusted returns
+
+## Bounded pre-outcome search
+
+Structured proposals, deterministic observations, and any actual feedback are recorded below. No calculated outcomes are used for planning.
+
+```json
+{
+  "method": "llm_bounded_candidate_search",
+  "mode": "llm",
+  "max_initial_candidates": 3,
+  "beam_width": 2,
+  "max_depth": 2,
+  "max_revisions": 1,
+  "max_provider_calls": 4,
+  "provider_calls": 2,
+  "outcome_access": false,
+  "rounds": [
+    {
+      "depth": 1,
+      "proposal": {
+        "action": "propose",
+        "candidates": [
+          {
+            "id": "c1",
+            "parent_id": null,
+            "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 3,
+            "evidence_claims": [
+              {
+                "claim": "High-volatility stocks have comparatively weak historical returns.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Variance-ranked portfolios can be formed using lagged returns windows such as 60 days for variance estimation.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns. Its variance window uses 60 days, with at least 20 observations."
+              },
+              {
+                "claim": "Disciplined empirical research with pre-specified hypotheses reduces false discoveries in financial backtests.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+              }
+            ],
+            "assumptions": [
+              "Synthetic monthly returns approximate realistic patterns suitable for testing volatility-based portfolio construction.",
+              "Transaction costs are accounted for at 10 basis points per gross traded notional.",
+              "Signal calculation uses trailing sample standard deviation of monthly simple returns for 6 months."
+            ],
+            "decision_rationale": "This candidate matches the user's explicit constraint of 6-month lookback and selecting 3 stocks, focusing on total volatility which is executable and well-supported by literature as a relevant signal.",
+            "limitations": [
+              "Does not account for factor model adjustments or residual volatility decomposition.",
+              "Synthetic data may not fully replicate real market dynamics.",
+              "Focus on total volatility omits possible insights from beta or idiosyncratic volatility due to data constraints."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          },
+          {
+            "id": "c2",
+            "parent_id": null,
+            "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 12-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+            "signal": "total_volatility",
+            "lookback_months": 12,
+            "selection_count": 3,
+            "evidence_claims": [
+              {
+                "claim": "Longer lookback windows for volatility can provide different insights than shorter ones; 12-month period is a common academic choice.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "The MVP's 12-month signal uses synthetic monthly returns and is an explicitly different educational specification."
+              },
+              {
+                "claim": "High-volatility stocks have comparatively weak historical returns.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Disciplined empirical research minimizes false positives in backtesting through locked hypotheses.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+              }
+            ],
+            "assumptions": [
+              "Longer 12-month lookback is valid on synthetic data despite original methodology using daily returns.",
+              "Transaction costs and portfolio rebalancing conform to MVP specifications.",
+              "Total volatility computed as trailing sample standard deviation of monthly returns."
+            ],
+            "decision_rationale": "Provides an alternative agent design with longer lookback to test sensitivity and robustness of the low total volatility effect under synthetic data constraints.",
+            "limitations": [
+              "Longer lookback may lag market regime changes affecting volatility measurement accuracy.",
+              "Synthetic data may not reflect real volatility clustering or jumps.",
+              "No real factor-based controls applied."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          },
+          {
+            "id": "c3",
+            "parent_id": null,
+            "research_claim": "Test whether a portfolio selecting the 4 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 4,
+            "evidence_claims": [
+              {
+                "claim": "Selecting a slightly larger portfolio may diversify idiosyncratic risks while focusing on low-volatility stocks.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Variance-ranked portfolios use historical return windows to create low-volatility portfolios.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns."
+              },
+              {
+                "claim": "Backtesting protocol recommends pre-specifying portfolio size and formation to avoid multiple testing bias.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "Disciplined empirical research to reduce false discoveries with pre-specified hypothesis."
+              }
+            ],
+            "assumptions": [
+              "Synthetic data supports selection count of 4 while still observing meaningful signals.",
+              "Transaction cost assumptions consistent with other candidates.",
+              "Total volatility estimation over 6-month window remains meaningful with 4-stock selection."
+            ],
+            "decision_rationale": "Tests effect of portfolio size on low volatility strategy performance, adhering closely to constraints and literature backing.",
+            "limitations": [
+              "4-stock portfolios are subject to higher idiosyncratic risk than larger portfolios.",
+              "Synthetic data limitations on real-stock correlation structures exist.",
+              "No control for factor exposures or residual risk effects."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          }
+        ],
+        "selected_candidate_id": "c1",
+        "decision_rationale": "Candidate c1 is chosen because it exactly matches the user's explicit constraints (6-month lookback and 3-stock selection), uses total volatility which is directly executable with synthetic monthly data, and is well supported by literature as relevant for testing the low-volatility effect in synthetic backtests. The other candidates extend beyond the constraints or vary parameters without explicit user direction, so c1 provides the most direct and grounded test.",
+        "deferral_reason": null
+      },
+      "candidates": [
+        {
+          "candidate": {
+            "id": "c1",
+            "parent_id": null,
+            "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 3,
+            "evidence_claims": [
+              {
+                "claim": "High-volatility stocks have comparatively weak historical returns.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Variance-ranked portfolios can be formed using lagged returns windows such as 60 days for variance estimation.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns. Its variance window uses 60 days, with at least 20 observations."
+              },
+              {
+                "claim": "Disciplined empirical research with pre-specified hypotheses reduces false discoveries in financial backtests.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+              }
+            ],
+            "assumptions": [
+              "Synthetic monthly returns approximate realistic patterns suitable for testing volatility-based portfolio construction.",
+              "Transaction costs are accounted for at 10 basis points per gross traded notional.",
+              "Signal calculation uses trailing sample standard deviation of monthly simple returns for 6 months."
+            ],
+            "decision_rationale": "This candidate matches the user's explicit constraint of 6-month lookback and selecting 3 stocks, focusing on total volatility which is executable and well-supported by literature as a relevant signal.",
+            "limitations": [
+              "Does not account for factor model adjustments or residual volatility decomposition.",
+              "Synthetic data may not fully replicate real market dynamics.",
+              "Focus on total volatility omits possible insights from beta or idiosyncratic volatility due to data constraints."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          },
+          "valid": false,
+          "errors": [
+            "Controlled validation condition: limitations must explicitly mention same-close execution and zero latency."
+          ],
+          "score": 10,
+          "score_breakdown": {
+            "grounding": 3,
+            "methodological_suitability": 2,
+            "feasibility": 3,
+            "question_fit": 2
+          },
+          "duplicate_reference": null
+        },
+        {
+          "candidate": {
+            "id": "c2",
+            "parent_id": null,
+            "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 12-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+            "signal": "total_volatility",
+            "lookback_months": 12,
+            "selection_count": 3,
+            "evidence_claims": [
+              {
+                "claim": "Longer lookback windows for volatility can provide different insights than shorter ones; 12-month period is a common academic choice.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "The MVP's 12-month signal uses synthetic monthly returns and is an explicitly different educational specification."
+              },
+              {
+                "claim": "High-volatility stocks have comparatively weak historical returns.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Disciplined empirical research minimizes false positives in backtesting through locked hypotheses.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+              }
+            ],
+            "assumptions": [
+              "Longer 12-month lookback is valid on synthetic data despite original methodology using daily returns.",
+              "Transaction costs and portfolio rebalancing conform to MVP specifications.",
+              "Total volatility computed as trailing sample standard deviation of monthly returns."
+            ],
+            "decision_rationale": "Provides an alternative agent design with longer lookback to test sensitivity and robustness of the low total volatility effect under synthetic data constraints.",
+            "limitations": [
+              "Longer lookback may lag market regime changes affecting volatility measurement accuracy.",
+              "Synthetic data may not reflect real volatility clustering or jumps.",
+              "No real factor-based controls applied."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          },
+          "valid": false,
+          "errors": [
+            "Candidate violates the explicit lookback_months constraint.",
+            "Controlled validation condition: limitations must explicitly mention same-close execution and zero latency."
+          ],
+          "score": 10,
+          "score_breakdown": {
+            "grounding": 3,
+            "methodological_suitability": 2,
+            "feasibility": 3,
+            "question_fit": 2
+          }
+        },
+        {
+          "candidate": {
+            "id": "c3",
+            "parent_id": null,
+            "research_claim": "Test whether a portfolio selecting the 4 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 4,
+            "evidence_claims": [
+              {
+                "claim": "Selecting a slightly larger portfolio may diversify idiosyncratic risks while focusing on low-volatility stocks.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Variance-ranked portfolios use historical return windows to create low-volatility portfolios.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns."
+              },
+              {
+                "claim": "Backtesting protocol recommends pre-specifying portfolio size and formation to avoid multiple testing bias.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "Disciplined empirical research to reduce false discoveries with pre-specified hypothesis."
+              }
+            ],
+            "assumptions": [
+              "Synthetic data supports selection count of 4 while still observing meaningful signals.",
+              "Transaction cost assumptions consistent with other candidates.",
+              "Total volatility estimation over 6-month window remains meaningful with 4-stock selection."
+            ],
+            "decision_rationale": "Tests effect of portfolio size on low volatility strategy performance, adhering closely to constraints and literature backing.",
+            "limitations": [
+              "4-stock portfolios are subject to higher idiosyncratic risk than larger portfolios.",
+              "Synthetic data limitations on real-stock correlation structures exist.",
+              "No control for factor exposures or residual risk effects."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          },
+          "valid": false,
+          "errors": [
+            "Candidate violates the explicit selection_count constraint.",
+            "Every executable candidate needs a supported methodological-caution claim.",
+            "Evidence claim 3 (arnott-2019-protocol): the excerpt is not an exact substring of the retrieved summary.",
+            "Controlled validation condition: limitations must explicitly mention same-close execution and zero latency."
+          ],
+          "score": 8,
+          "score_breakdown": {
+            "grounding": 2,
+            "methodological_suitability": 1,
+            "feasibility": 3,
+            "question_fit": 2
+          }
+        }
+      ],
+      "retained": [
+        "c1",
+        "c2"
+      ]
+    },
+    {
+      "depth": 2,
+      "proposal": {
+        "action": "revise",
+        "candidates": [
+          {
+            "id": "c3",
+            "parent_id": "c1",
+            "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns under zero latency and same-close execution conditions.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 3,
+            "evidence_claims": [
+              {
+                "claim": "High-volatility stocks have comparatively weak historical returns.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Variance-ranked portfolios can be formed using lagged returns windows such as 60 days for variance estimation.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns. Its variance window uses 60 days, with at least 20 observations."
+              },
+              {
+                "claim": "Disciplined empirical research to reduce false discoveries requires locking hypotheses prior to performance inspection.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+              }
+            ],
+            "assumptions": [
+              "Synthetic monthly returns approximate realistic patterns suitable for testing volatility-based portfolio construction.",
+              "Transaction costs are accounted for at 10 basis points per gross traded notional.",
+              "Signal calculation uses trailing sample standard deviation of monthly simple returns for 6 months.",
+              "Portfolio rebalancing and signal computation assume zero latency and same-close execution."
+            ],
+            "decision_rationale": "This revision addresses prior objections by explicitly including zero latency and same-close execution assumptions in limitations, fully matching the user's lookback and selection constraints, and incorporating a methodological-caution evidence claim to strengthen research protocol validity.",
+            "limitations": [
+              "Does not account for factor model adjustments or residual volatility decomposition.",
+              "Synthetic data may not fully replicate real market dynamics, including volatility clustering and jumps.",
+              "Assumes zero latency and same-close execution, which may not be feasible in actual trading environments."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          }
+        ],
+        "selected_candidate_id": "c3",
+        "decision_rationale": "Candidate c3 best fits all explicit user constraints, incorporates essential methodological caution evidence, and addresses validation objections by clarifying execution assumptions. It properly tests the effect of selecting low total volatility stocks using a 6-month lookback on synthetic data, ensuring feasibility and replicability.",
+        "deferral_reason": null
+      },
+      "candidates": [
+        {
+          "candidate": {
+            "id": "c3",
+            "parent_id": "c1",
+            "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns under zero latency and same-close execution conditions.",
+            "signal": "total_volatility",
+            "lookback_months": 6,
+            "selection_count": 3,
+            "evidence_claims": [
+              {
+                "claim": "High-volatility stocks have comparatively weak historical returns.",
+                "source_id": "baker-2010-benchmarks",
+                "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+              },
+              {
+                "claim": "Variance-ranked portfolios can be formed using lagged returns windows such as 60 days for variance estimation.",
+                "source_id": "french-variance-methodology",
+                "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns. Its variance window uses 60 days, with at least 20 observations."
+              },
+              {
+                "claim": "Disciplined empirical research to reduce false discoveries requires locking hypotheses prior to performance inspection.",
+                "source_id": "arnott-2019-protocol",
+                "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+              }
+            ],
+            "assumptions": [
+              "Synthetic monthly returns approximate realistic patterns suitable for testing volatility-based portfolio construction.",
+              "Transaction costs are accounted for at 10 basis points per gross traded notional.",
+              "Signal calculation uses trailing sample standard deviation of monthly simple returns for 6 months.",
+              "Portfolio rebalancing and signal computation assume zero latency and same-close execution."
+            ],
+            "decision_rationale": "This revision addresses prior objections by explicitly including zero latency and same-close execution assumptions in limitations, fully matching the user's lookback and selection constraints, and incorporating a methodological-caution evidence claim to strengthen research protocol validity.",
+            "limitations": [
+              "Does not account for factor model adjustments or residual volatility decomposition.",
+              "Synthetic data may not fully replicate real market dynamics, including volatility clustering and jumps.",
+              "Assumes zero latency and same-close execution, which may not be feasible in actual trading environments."
+            ],
+            "parameter_basis": "agent_design_choice",
+            "adaptation_rationale": null
+          },
+          "valid": true,
+          "errors": [],
+          "score": 10,
+          "score_breakdown": {
+            "grounding": 3,
+            "methodological_suitability": 2,
+            "feasibility": 3,
+            "question_fit": 2
+          },
+          "duplicate_reference": null
+        }
+      ],
+      "retained": [
+        "c3"
+      ]
+    }
+  ],
+  "feedback": [
+    {
+      "round": 2,
+      "objections": [
+        "c1: Controlled validation condition: limitations must explicitly mention same-close execution and zero latency.",
+        "c2: Candidate violates the explicit lookback_months constraint.",
+        "c2: Controlled validation condition: limitations must explicitly mention same-close execution and zero latency.",
+        "c3: Candidate violates the explicit selection_count constraint.",
+        "c3: Every executable candidate needs a supported methodological-caution claim.",
+        "c3: Evidence claim 3 (arnott-2019-protocol): the excerpt is not an exact substring of the retrieved summary.",
+        "c3: Controlled validation condition: limitations must explicitly mention same-close execution and zero latency."
+      ],
+      "parent_ids": [
+        "c1",
+        "c2"
+      ],
+      "candidates": [
+        {
+          "id": "c1",
+          "parent_id": null,
+          "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+          "signal": "total_volatility",
+          "lookback_months": 6,
+          "selection_count": 3,
+          "evidence_claims": [
+            {
+              "claim": "High-volatility stocks have comparatively weak historical returns.",
+              "source_id": "baker-2010-benchmarks",
+              "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+            },
+            {
+              "claim": "Variance-ranked portfolios can be formed using lagged returns windows such as 60 days for variance estimation.",
+              "source_id": "french-variance-methodology",
+              "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns. Its variance window uses 60 days, with at least 20 observations."
+            },
+            {
+              "claim": "Disciplined empirical research with pre-specified hypotheses reduces false discoveries in financial backtests.",
+              "source_id": "arnott-2019-protocol",
+              "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+            }
+          ],
+          "assumptions": [
+            "Synthetic monthly returns approximate realistic patterns suitable for testing volatility-based portfolio construction.",
+            "Transaction costs are accounted for at 10 basis points per gross traded notional.",
+            "Signal calculation uses trailing sample standard deviation of monthly simple returns for 6 months."
+          ],
+          "decision_rationale": "This candidate matches the user's explicit constraint of 6-month lookback and selecting 3 stocks, focusing on total volatility which is executable and well-supported by literature as a relevant signal.",
+          "limitations": [
+            "Does not account for factor model adjustments or residual volatility decomposition.",
+            "Synthetic data may not fully replicate real market dynamics.",
+            "Focus on total volatility omits possible insights from beta or idiosyncratic volatility due to data constraints."
+          ],
+          "parameter_basis": "agent_design_choice",
+          "adaptation_rationale": null
+        },
+        {
+          "id": "c2",
+          "parent_id": null,
+          "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 12-month lookback period outperforms the market benchmark in synthetic monthly returns.",
+          "signal": "total_volatility",
+          "lookback_months": 12,
+          "selection_count": 3,
+          "evidence_claims": [
+            {
+              "claim": "Longer lookback windows for volatility can provide different insights than shorter ones; 12-month period is a common academic choice.",
+              "source_id": "french-variance-methodology",
+              "summary_excerpt": "The MVP's 12-month signal uses synthetic monthly returns and is an explicitly different educational specification."
+            },
+            {
+              "claim": "High-volatility stocks have comparatively weak historical returns.",
+              "source_id": "baker-2010-benchmarks",
+              "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+            },
+            {
+              "claim": "Disciplined empirical research minimizes false positives in backtesting through locked hypotheses.",
+              "source_id": "arnott-2019-protocol",
+              "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+            }
+          ],
+          "assumptions": [
+            "Longer 12-month lookback is valid on synthetic data despite original methodology using daily returns.",
+            "Transaction costs and portfolio rebalancing conform to MVP specifications.",
+            "Total volatility computed as trailing sample standard deviation of monthly returns."
+          ],
+          "decision_rationale": "Provides an alternative agent design with longer lookback to test sensitivity and robustness of the low total volatility effect under synthetic data constraints.",
+          "limitations": [
+            "Longer lookback may lag market regime changes affecting volatility measurement accuracy.",
+            "Synthetic data may not reflect real volatility clustering or jumps.",
+            "No real factor-based controls applied."
+          ],
+          "parameter_basis": "agent_design_choice",
+          "adaptation_rationale": null
+        }
+      ]
+    }
+  ],
+  "selected_candidate_id": "c3",
+  "selected_candidate": {
+    "id": "c3",
+    "parent_id": "c1",
+    "research_claim": "Test whether a portfolio selecting the 3 lowest total volatility stocks using a 6-month lookback period outperforms the market benchmark in synthetic monthly returns under zero latency and same-close execution conditions.",
+    "signal": "total_volatility",
+    "lookback_months": 6,
+    "selection_count": 3,
+    "evidence_claims": [
+      {
+        "claim": "High-volatility stocks have comparatively weak historical returns.",
+        "source_id": "baker-2010-benchmarks",
+        "summary_excerpt": "The paper examines comparatively weak historical returns among high-volatility and high-beta stocks."
+      },
+      {
+        "claim": "Variance-ranked portfolios can be formed using lagged returns windows such as 60 days for variance estimation.",
+        "source_id": "french-variance-methodology",
+        "summary_excerpt": "This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns. Its variance window uses 60 days, with at least 20 observations."
+      },
+      {
+        "claim": "Disciplined empirical research to reduce false discoveries requires locking hypotheses prior to performance inspection.",
+        "source_id": "arnott-2019-protocol",
+        "summary_excerpt": "The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection."
+      }
+    ],
+    "assumptions": [
+      "Synthetic monthly returns approximate realistic patterns suitable for testing volatility-based portfolio construction.",
+      "Transaction costs are accounted for at 10 basis points per gross traded notional.",
+      "Signal calculation uses trailing sample standard deviation of monthly simple returns for 6 months.",
+      "Portfolio rebalancing and signal computation assume zero latency and same-close execution."
+    ],
+    "decision_rationale": "This revision addresses prior objections by explicitly including zero latency and same-close execution assumptions in limitations, fully matching the user's lookback and selection constraints, and incorporating a methodological-caution evidence claim to strengthen research protocol validity.",
+    "limitations": [
+      "Does not account for factor model adjustments or residual volatility decomposition.",
+      "Synthetic data may not fully replicate real market dynamics, including volatility clustering and jumps.",
+      "Assumes zero latency and same-close execution, which may not be feasible in actual trading environments."
+    ],
+    "parameter_basis": "agent_design_choice",
+    "adaptation_rationale": null
+  },
+  "replication_rationale": null
+}
+```
+
+## Public grounding
+
+- [Benchmarks as Limits to Arbitrage: Understanding the Low-Volatility Anomaly](https://archive.nyu.edu/handle/2451/29593) (`baker-2010-benchmarks`): The paper examines comparatively weak historical returns among high-volatility and high-beta stocks. It proposes that investor demand for risk and benchmark-relative mandates can limit corrective arbitrage. This motivates comparing total-volatility and beta definitions, while leaving open whether any particular implementation will reproduce the reported pattern.
+- [The Cross-Section of Volatility and Expected Returns](https://www.nber.org/papers/w10852) (`ang-2004-volatility`): The authors study aggregate volatility exposure and firm-specific volatility in stock returns. Their evidence links high residual volatility relative to the Fama/French model with lower average returns. Residual volatility is distinct from total return volatility, so this paper motivates a separate candidate rather than directly validating the MVP's total-volatility specification.
+- [Portfolios Formed Monthly on Variance](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_port_form_VAR.html) (`french-variance-methodology`): This methodology forms variance-ranked portfolios each month using NYSE breakpoints and lagged daily returns. Its variance window uses 60 days, with at least 20 observations. The MVP's 12-month signal uses synthetic monthly returns and is an explicitly different educational specification. Only the methodology description is indexed; numerical portfolio returns are not included.
+- [Description of Fama/French Factors](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/f-f_factors.html) (`french-factor-methodology`): The page explains market excess returns and the size and value factors built from stock portfolios. These factors provide context for separating market exposure from residual volatility. A factor-based test would need dated factor observations and an explicit estimation model. This MVP retrieves the description only and neither downloads nor substitutes real factor data.
+- [A Backtesting Protocol in the Era of Machine Learning](https://people.duke.edu/~charvey/Research/Published_Papers/G138_A_backtesting_protocol.pdf) (`arnott-2019-protocol`): The authors propose disciplined empirical research to reduce false discoveries in limited financial samples. Economic motivation and a falsifiable hypothesis should precede performance inspection. Repeatedly modifying models after seeing returns can inflate apparent success. The MVP uses this guidance for pre-outcome specification locks and a record of every candidate considered.
+- [The Probability of Backtest Overfitting](https://escholarship.org/content/qt4w1110bb/qt4w1110bb.pdf) (`bailey-2017-overfitting`): Selecting the best historical result from many strategy trials can select noise. The paper develops a probability-of-overfitting framework and combinatorially symmetric cross-validation to examine this selection problem. The MVP records its bounded search and forbids performance-based revision; it does not implement the paper's probability estimator or establish statistical significance.
+
+## Execution provenance and persistent memory
+
+```json
+{
+  "execution_mode": "llm",
+  "provider_execution": {
+    "calls_attempted": 2,
+    "actual_provider_calls": 2,
+    "calls": [
+      {
+        "provider": "openai",
+        "requested_model": "gpt-4.1-mini-2025-04-14",
+        "actual_model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_04d7ee2fa17dd4bc016a9f4439ef9c87d1958dbe1b2506f241",
+        "usage": {
+          "input_tokens": 2629,
+          "output_tokens": 1212,
+          "total_tokens": 3841
+        },
+        "actual_provider_call": true,
+        "status": "completed",
+        "cost_usd": null,
+        "provider_response_status": "completed",
+        "incomplete_reason": null,
+        "provider_error_code": null,
+        "requested_max_output_tokens": 2500,
+        "response_schema_hash": "166ffec853feb971a7d6db1fc86e727e4b38d92698789f45eb438e6cba05bc53"
+      },
+      {
+        "provider": "openai",
+        "requested_model": "gpt-4.1-mini-2025-04-14",
+        "actual_model": "gpt-4.1-mini-2025-04-14",
+        "response_id": "resp_0cd5eb7e7785c1c4016a9f44486b8487d18a973c511c1a9b76",
+        "usage": {
+          "input_tokens": 3543,
+          "output_tokens": 514,
+          "total_tokens": 4057
+        },
+        "actual_provider_call": true,
+        "status": "completed",
+        "cost_usd": null,
+        "provider_response_status": "completed",
+        "incomplete_reason": null,
+        "provider_error_code": null,
+        "requested_max_output_tokens": 2500,
+        "response_schema_hash": "dae96cf91c0c2ba8dd228d00469e7114f513a7c22c46927253542e356d0bf547"
+      }
+    ],
+    "token_usage": {
+      "input_tokens": 6172,
+      "output_tokens": 1726,
+      "total_tokens": 7898
+    },
+    "cost_usd": null,
+    "live_execution_verified": false
+  },
+  "memory_context": [],
+  "duplicate_reference": null,
+  "replication_rationale": null,
+  "replay_provenance": null,
+  "controlled_validation": "require_same_close_limitation"
+}
+```
+
+Citation checks verify eligible IDs, exact summary excerpts, and limited lexical support. They are not a proof of entailment; human review of the source-to-claim relationship remains necessary.
+
+## Independent skeptical review
+
+Confidence: none
+
+### Objections
+
+- The candidate tree failed the pre-lock isolation or budget contract.
+
+### Limitations
+
+- No new research conclusion is supported by this stopped run.
+
+## Audit and memory
+
+`audit.jsonl` records role events and gates. `research_journal.jsonl` retains locks and conclusions across runs. Both use append-only SHA-256 chains. They are local integrity checks, not externally authenticated evidence.

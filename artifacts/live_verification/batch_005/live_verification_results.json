@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "verification_kind": "real_provider_batch",
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "batch": "batch_005",
+  "hard_provider_attempt_limit": 16,
+  "provider_attempts": 1,
+  "actual_provider_calls": 1,
+  "checks": {
+    "A_genuine_research": false,
+    "B_persisted_duplicate": null,
+    "C_controlled_feedback": null,
+    "D_explicit_supported_choices": null
+  },
+  "runs": [
+    {
+      "name": "A_research",
+      "status": "provider_incomplete",
+      "verdict": "rejected",
+      "result_path": "batch_005/A_research/result.json",
+      "actual_provider_calls": 1,
+      "provider_execution": {
+        "calls_attempted": 1,
+        "actual_provider_calls": 1,
+        "calls": [
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_071fd81080ea259c016a9f41f3ab7c87d1a9d93b3c9f42ef67",
+            "usage": {
+              "input_tokens": 2619,
+              "output_tokens": 0,
+              "total_tokens": 2619
+            },
+            "actual_provider_call": true,
+            "status": "provider_incomplete",
+            "cost_usd": null,
+            "provider_response_status": "incomplete",
+            "incomplete_reason": "max_output_tokens",
+            "provider_error_code": null
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 2619,
+          "output_tokens": 0,
+          "total_tokens": 2619
+        },
+        "cost_usd": null,
+        "live_execution_verified": false
+      },
+      "stop_reasons": [
+        "The provider did not return a completed structured design; no offline fallback was used."
+      ],
+      "validation_failures": [],
+      "requires_human_intervention": true
+    }
+  ],
+  "incomplete_checks": [
+    "A did not complete a genuine LLM research run; dependent B and remaining C/D were not attempted."
+  ],
+  "live_verified": false,
+  "status": "incomplete",
+  "required_environment_variable": null,
+  "controlled_condition": "C deliberately adds a pre-lock validation requirement to explicitly name same-close execution and zero latency in limitations. No data, seed, or outcome is changed.",
+  "elapsed_seconds": 4.09681
+}

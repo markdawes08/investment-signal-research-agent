@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0",
+  "verification_kind": "real_provider_batch",
+  "safety_notices": [
+    "LLM-assisted research MVP",
+    "Deterministic synthetic data",
+    "Historical research only",
+    "Not investment advice",
+    "No trade execution",
+    "Not evidence of future performance",
+    "Not evidence about real markets"
+  ],
+  "batch": "batch_006",
+  "hard_provider_attempt_limit": 16,
+  "provider_attempts": 5,
+  "actual_provider_calls": 5,
+  "checks": {
+    "A_genuine_research": true,
+    "B_persisted_duplicate": true,
+    "C_controlled_feedback": false,
+    "D_explicit_supported_choices": true
+  },
+  "runs": [
+    {
+      "name": "A_research",
+      "status": "completed",
+      "verdict": "supported_in_synthetic_fixture_only",
+      "result_path": "batch_006/A_research/result.json",
+      "actual_provider_calls": 1,
+      "provider_execution": {
+        "calls_attempted": 1,
+        "actual_provider_calls": 1,
+        "calls": [
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_0a6bc80fa4391e8a016a9f4411a1f487d19d42622b1055c498",
+            "usage": {
+              "input_tokens": 2619,
+              "output_tokens": 1545,
+              "total_tokens": 4164
+            },
+            "actual_provider_call": true,
+            "status": "completed",
+            "cost_usd": null,
+            "provider_response_status": "completed",
+            "incomplete_reason": null,
+            "provider_error_code": null,
+            "requested_max_output_tokens": 2500,
+            "response_schema_hash": "166ffec853feb971a7d6db1fc86e727e4b38d92698789f45eb438e6cba05bc53"
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 2619,
+          "output_tokens": 1545,
+          "total_tokens": 4164
+        },
+        "cost_usd": null,
+        "live_execution_verified": true
+      },
+      "stop_reasons": [],
+      "validation_failures": [],
+      "requires_human_intervention": false
+    },
+    {
+      "name": "B_duplicate",
+      "status": "duplicate_deferred",
+      "verdict": "rejected",
+      "result_path": "batch_006/B_duplicate/result.json",
+      "actual_provider_calls": 1,
+      "provider_execution": {
+        "calls_attempted": 1,
+        "actual_provider_calls": 1,
+        "calls": [
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_06df5772ded41ad8016a9f4423818c87d1a2c801f19cc2a275",
+            "usage": {
+              "input_tokens": 3057,
+              "output_tokens": 1640,
+              "total_tokens": 4697
+            },
+            "actual_provider_call": true,
+            "status": "completed",
+            "cost_usd": null,
+            "provider_response_status": "completed",
+            "incomplete_reason": null,
+            "provider_error_code": null,
+            "requested_max_output_tokens": 2500,
+            "response_schema_hash": "166ffec853feb971a7d6db1fc86e727e4b38d92698789f45eb438e6cba05bc53"
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 3057,
+          "output_tokens": 1640,
+          "total_tokens": 4697
+        },
+        "cost_usd": null,
+        "live_execution_verified": false
+      },
+      "stop_reasons": [
+        "The same scientific experiment is already recorded. No redundant backtest was executed."
+      ],
+      "validation_failures": [],
+      "requires_human_intervention": true
+    },
+    {
+      "name": "C_controlled_feedback",
+      "status": "search_gate_failed",
+      "verdict": "rejected",
+      "result_path": "batch_006/C_controlled_feedback/result.json",
+      "actual_provider_calls": 2,
+      "provider_execution": {
+        "calls_attempted": 2,
+        "actual_provider_calls": 2,
+        "calls": [
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_04d7ee2fa17dd4bc016a9f4439ef9c87d1958dbe1b2506f241",
+            "usage": {
+              "input_tokens": 2629,
+              "output_tokens": 1212,
+              "total_tokens": 3841
+            },
+            "actual_provider_call": true,
+            "status": "completed",
+            "cost_usd": null,
+            "provider_response_status": "completed",
+            "incomplete_reason": null,
+            "provider_error_code": null,
+            "requested_max_output_tokens": 2500,
+            "response_schema_hash": "166ffec853feb971a7d6db1fc86e727e4b38d92698789f45eb438e6cba05bc53"
+          },
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_0cd5eb7e7785c1c4016a9f44486b8487d18a973c511c1a9b76",
+            "usage": {
+              "input_tokens": 3543,
+              "output_tokens": 514,
+              "total_tokens": 4057
+            },
+            "actual_provider_call": true,
+            "status": "completed",
+            "cost_usd": null,
+            "provider_response_status": "completed",
+            "incomplete_reason": null,
+            "provider_error_code": null,
+            "requested_max_output_tokens": 2500,
+            "response_schema_hash": "dae96cf91c0c2ba8dd228d00469e7114f513a7c22c46927253542e356d0bf547"
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 6172,
+          "output_tokens": 1726,
+          "total_tokens": 7898
+        },
+        "cost_usd": null,
+        "live_execution_verified": false
+      },
+      "stop_reasons": [
+        "The candidate tree failed the pre-lock isolation or budget contract."
+      ],
+      "validation_failures": [],
+      "requires_human_intervention": true
+    },
+    {
+      "name": "D_explicit_choices",
+      "status": "completed",
+      "verdict": "supported_in_synthetic_fixture_only",
+      "result_path": "batch_006/D_explicit_choices/result.json",
+      "actual_provider_calls": 1,
+      "provider_execution": {
+        "calls_attempted": 1,
+        "actual_provider_calls": 1,
+        "calls": [
+          {
+            "provider": "openai",
+            "requested_model": "gpt-4.1-mini-2025-04-14",
+            "actual_model": "gpt-4.1-mini-2025-04-14",
+            "response_id": "resp_070a43e066d3617b016a9f444f871487d1a5df9057836abbe1",
+            "usage": {
+              "input_tokens": 2629,
+              "output_tokens": 1391,
+              "total_tokens": 4020
+            },
+            "actual_provider_call": true,
+            "status": "completed",
+            "cost_usd": null,
+            "provider_response_status": "completed",
+            "incomplete_reason": null,
+            "provider_error_code": null,
+            "requested_max_output_tokens": 2500,
+            "response_schema_hash": "166ffec853feb971a7d6db1fc86e727e4b38d92698789f45eb438e6cba05bc53"
+          }
+        ],
+        "token_usage": {
+          "input_tokens": 2629,
+          "output_tokens": 1391,
+          "total_tokens": 4020
+        },
+        "cost_usd": null,
+        "live_execution_verified": true
+      },
+      "stop_reasons": [],
+      "validation_failures": [],
+      "requires_human_intervention": false
+    }
+  ],
+  "incomplete_checks": [],
+  "live_verified": false,
+  "status": "incomplete",
+  "required_environment_variable": null,
+  "controlled_condition": "C deliberately adds a pre-lock validation requirement to explicitly name same-close execution and zero latency in limitations. No data, seed, or outcome is changed.",
+  "elapsed_seconds": 76.129033
+}
