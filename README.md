@@ -1,6 +1,6 @@
 # Investment Signal Research Agent
 
-**Offline MVP · Deterministic synthetic data · Historical research only · Not investment advice · No trade execution · Not evidence of future performance**
+**Deterministic synthetic data · Historical research only · Not investment advice · No trade execution · Not evidence of future performance**
 
 An offline research assistant that turns a broad question about stock volatility into a locked, falsifiable hypothesis, runs one reproducible synthetic experiment, and records an independent critique with an audit trail. It is designed for students, technical reviewers, and research engineers who want to inspect how evidence, preregistration, data quality, and methodological review fit together.
 
@@ -229,4 +229,4 @@ The corpus contains original summaries and metadata, not copies of papers or num
 
 See [architecture.md](docs/architecture.md) for component contracts, formulas, and the integrity threat model. The original code and original corpus summaries are MIT licensed; external research remains the property of its respective authors and publishers.
 
-**Offline MVP. Deterministic synthetic data. Historical research only. Not investment advice. No trade execution. Not evidence of future performance.**
+**Deterministic synthetic data. Historical research only. Not investment advice. No trade execution. Not evidence of future performance.**
